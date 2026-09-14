@@ -15,6 +15,7 @@ PostgreSQL + PostGIS. Schema is managed entirely through Alembic migrations in
 | `field_reports` | Field submissions, incl. voice-to-report transcript/extraction |
 | `evidence`, `evidence_versions` | Hashed, versioned evidence files (originals never overwritten) |
 | `ai_detections` | AI change-detection signals, always `requires_verification` |
+| `satellite_observations`, `satellite_scans` | Before/after imagery metadata for a change-detection pass, and the audit link from a scan to the `ai_detections` row it produced |
 | `risk_scores`, `risk_factors` | Explainable risk score + its named contributing factors |
 | `reports`, `report_sources` | Generated PRO/intelligence reports + the incident IDs backing them |
 | `audit_logs` | Append-only log of every sensitive action |

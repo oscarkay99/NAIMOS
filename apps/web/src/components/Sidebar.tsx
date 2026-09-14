@@ -15,6 +15,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/map", label: "Map" },
+  { href: "/satellite", label: "Satellite Monitoring", permission: "satellite:scan" },
   { href: "/incidents", label: "Incidents", permission: "incident:read" },
   { href: "/field", label: "Field Reporting", permission: "field_report:create" },
   { href: "/assistant", label: "Intelligence Assistant", permission: "ai:query" },

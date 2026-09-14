@@ -2,11 +2,32 @@
 
 import { useEffect, useRef } from "react";
 import * as maplibregl from "maplibre-gl";
-import type { Map as MLMap, Marker } from "maplibre-gl";
+import type { Map as MLMap, Marker, StyleSpecification } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { MapFeature } from "@/lib/types";
 
 const STYLE_URL = "https://tiles.openfreemap.org/styles/liberty";
+
+/** Real current-imagery satellite basemap - Esri World Imagery, free/public,
+ * no API key required. Used by the Satellite Monitoring page so the AOI view
+ * shows the actual location, not a placeholder graphic. There is no
+ * historical archive behind this (only the latest available pass), so it
+ * backs the "current view" only - the before/after change-detection numbers
+ * come from the simulated pipeline, never from this basemap. */
+export const SATELLITE_STYLE: StyleSpecification = {
+  version: 8,
+  sources: {
+    "esri-world-imagery": {
+      type: "raster",
+      tiles: [
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      ],
+      tileSize: 256,
+      attribution: "Esri, Maxar, Earthstar Geographics, USDA, USGS, AeroGRID, IGN, GIS User Community",
+    },
+  },
+  layers: [{ id: "esri-world-imagery", type: "raster", source: "esri-world-imagery" }],
+};
 
 const LAYER_COLORS: Record<string, string> = {
   incident: "#c33f2e",
@@ -39,6 +60,8 @@ export function MapPanel({
   zoom = 6.3,
   heightClass = "h-full",
   activeLayers,
+  style,
+  pin,
 }: {
   features: MapFeature[];
   onFeatureClick?: (feature: MapFeature) => void;
@@ -47,16 +70,21 @@ export function MapPanel({
   zoom?: number;
   heightClass?: string;
   activeLayers?: Set<string>;
+  /** Basemap style - defaults to the vector street style; pass SATELLITE_STYLE for real imagery. */
+  style?: string | StyleSpecification;
+  /** A single crosshair-style pin for an arbitrary AOI point (not part of `features`). */
+  pin?: { latitude: number; longitude: number } | null;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MLMap | null>(null);
   const markersRef = useRef<Marker[]>([]);
+  const pinMarkerRef = useRef<Marker | null>(null);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: STYLE_URL,
+      style: style ?? STYLE_URL,
       center,
       zoom,
     });
@@ -75,6 +103,25 @@ export function MapPanel({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (pinMarkerRef.current) {
+      pinMarkerRef.current.remove();
+      pinMarkerRef.current = null;
+    }
+    if (pin) {
+      const el = document.createElement("div");
+      el.style.width = "22px";
+      el.style.height = "22px";
+      el.style.borderRadius = "50%";
+      el.style.border = "3px solid #facc15";
+      el.style.boxShadow = "0 0 0 3px rgba(250,204,21,0.35)";
+      pinMarkerRef.current = new maplibregl.Marker({ element: el }).setLngLat([pin.longitude, pin.latitude]).addTo(map);
+      map.flyTo({ center: [pin.longitude, pin.latitude], zoom: Math.max(map.getZoom(), 13) });
+    }
+  }, [pin]);
 
   useEffect(() => {
     const map = mapRef.current;

@@ -1,7 +1,19 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import ai, analytics, audit, auth, evidence, field_reports, geo, incidents, reports, risk
+from app.api.routes import (
+    ai,
+    analytics,
+    audit,
+    auth,
+    evidence,
+    field_reports,
+    geo,
+    incidents,
+    reports,
+    risk,
+    satellite,
+)
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -30,6 +42,7 @@ app.include_router(ai.router)
 app.include_router(reports.router)
 app.include_router(analytics.router)
 app.include_router(audit.router)
+app.include_router(satellite.router)
 
 
 @app.get("/health")

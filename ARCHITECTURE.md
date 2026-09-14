@@ -48,11 +48,17 @@ later without touching call sites:
   built and tested against real credentials.
 - **`StorageProvider`** (`services/storage/local_storage.py`) - local
   filesystem today; swap for an S3-compatible client via `STORAGE_PROVIDER`.
-- **Satellite imagery** - not implemented in this build. The spec's
-  `SatelliteProvider` interface, mock imagery, and change-detection UI are
-  explicitly deferred; `ai_detections` already models what a real detector
-  would emit (`detection_type`, `confidence`, `estimated_area_hectares`,
-  `requires_verification`) so a real pipeline can populate the same table.
+- **`SatelliteProvider`** (`services/satellite/provider.py`) - `MockSatelliteProvider`
+  simulates a before/after Sentinel-2-style change-detection pass (deterministic
+  per AOI per day) and is wired into a real, working pipeline: the AOI view in
+  the Satellite Monitoring page renders actual current satellite imagery (Esri
+  World Imagery, no key required); running a scan persists real
+  `satellite_observations` + `ai_detections` rows through the normal
+  application code path, which the existing risk engine, map, and audit log
+  all react to exactly as they would to a real detector's output. Only the
+  pixel-level change analysis itself is simulated - swapping in a real
+  provider (Sentinel Hub / Google Earth Engine, needs credentials) means
+  implementing this same interface; nothing downstream changes.
 - **Notifications** - the `notifications` table models channel + event type;
   no email/SMS/WhatsApp sender is wired up (nothing to fake without real
   credentials).
@@ -77,8 +83,10 @@ breakdown alongside the score - there is no opaque score with no explanation.
 ## Explicitly out of scope for this build
 
 Native mobile app (the field UI is a responsive web app usable on phones
-instead - see `apps/web/src/app/(app)/field`), live satellite/Sentinel
-imagery, Elasticsearch/OpenSearch (Postgres full-text search is used where
+instead - see `apps/web/src/app/(app)/field`), a real time-series satellite
+feed (Satellite Monitoring uses real current imagery + a simulated
+change-detection pass - see the `SatelliteProvider` note above),
+Elasticsearch/OpenSearch (Postgres full-text search is used where
 search exists), real SMS/WhatsApp/email sending, offline conflict resolution
 beyond the `captured_offline`/`synced_at` fields already on `field_reports`,
 an exhaustive penetration-style security test suite, and CI/CD configuration.

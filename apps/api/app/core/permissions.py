@@ -23,6 +23,7 @@ PERMISSIONS = {
     "field_report:create": "Submit a field report",
     "ai:query": "Use the natural-language AI assistant",
     "ai:analyze_image": "Run AI image analysis on evidence",
+    "satellite:scan": "Run AI satellite change-detection scans",
     "risk:view": "View risk scores and explanations",
     "report:generate": "Generate intelligence/PRO reports",
     "communications:generate": "Generate PRO communications output",
@@ -39,8 +40,8 @@ ROLE_PERMISSIONS: dict[RoleName, set[str]] = {
     RoleName.OPERATIONS_MANAGER: {
         "incident:read", "incident:update", "incident:change_status",
         "evidence:read", "investigation:create", "investigation:assign",
-        "field_report:create", "ai:query", "risk:view", "report:generate",
-        "analytics:view",
+        "field_report:create", "ai:query", "satellite:scan", "risk:view",
+        "report:generate", "analytics:view",
     },
     RoleName.FIELD_SUPERVISOR: {
         "incident:read", "incident:update", "incident:change_status",
@@ -53,11 +54,12 @@ ROLE_PERMISSIONS: dict[RoleName, set[str]] = {
     },
     RoleName.INTELLIGENCE_ANALYST: {
         "incident:read", "incident:update", "evidence:read", "ai:query",
-        "ai:analyze_image", "risk:view", "report:generate", "analytics:view",
+        "ai:analyze_image", "satellite:scan", "risk:view", "report:generate",
+        "analytics:view",
     },
     RoleName.ENVIRONMENTAL_ANALYST: {
         "incident:read", "evidence:read", "ai:query", "ai:analyze_image",
-        "risk:view", "analytics:view",
+        "satellite:scan", "risk:view", "analytics:view",
     },
     RoleName.PRO: {
         "incident:read", "risk:view", "report:generate", "communications:generate",

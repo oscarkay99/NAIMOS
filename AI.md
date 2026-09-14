@@ -16,6 +16,9 @@ Concretely, in this codebase:
   (`services/risk/engine.py`).
 - AI detections (`ai_detections` table) default `requires_verification=true`
   and carry a `review_status` that starts `PENDING` - nothing is auto-verified.
+- Satellite change-detection results always carry a disclaimer stating the
+  analysis is simulated and that it requires field verification, never
+  confirmation of illegal activity (`schemas/satellite.py::SatelliteScanResult`).
 - Image analysis results are explicitly labeled *"an observation aid, not
   legal proof"* with *"No facial recognition or biometric identification is
   performed"* (`schemas/evidence.py::ImageAnalysisOut`).
@@ -40,6 +43,22 @@ returns:
 
 Every AI-touched record stores `model_name` + `model_version` so outputs are
 auditable and comparable across model versions (section 35).
+
+## SatelliteProvider abstraction
+
+`services/satellite/provider.py` defines the interface (`detect_change(lat,
+lon) -> ChangeDetectionResult`); `get_satellite_provider()` currently always
+returns `MockSatelliteProvider`, which simulates a Sentinel-2-style
+before/after pass deterministically per AOI per day (so re-scanning the same
+spot the same day returns the same result, and a repeat scan the next day
+draws a fresh one - standing in for a new satellite pass becoming
+available). Every field a real provider would need to supply is modeled:
+imagery provider, acquisition date, resolution, cloud coverage, detected
+change type/confidence/area. The Satellite Monitoring page (`apps/web/src/app/(app)/satellite`)
+shows this alongside real current satellite imagery for the same AOI (Esri
+World Imagery), so the mechanism is genuine even though the change signal
+itself is not - see ARCHITECTURE.md for what changes when a real time-series
+provider is connected.
 
 ## Natural-language → database pipeline (section 20)
 

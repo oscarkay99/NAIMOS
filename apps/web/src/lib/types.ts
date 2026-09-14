@@ -227,3 +227,50 @@ export interface VoiceReportTranscribeOut {
   model_name: string;
   model_version: string;
 }
+
+export interface ObservationOut {
+  provider: string;
+  acquisition_date: string;
+  resolution_m: number;
+  cloud_coverage_pct: number;
+  is_simulated: boolean;
+}
+
+export interface NearbyFeatureOut {
+  name: string;
+  distance_km: number;
+}
+
+export interface SatelliteScanResult {
+  ai_detection_id: string;
+  latitude: number;
+  longitude: number;
+  region: string | null;
+  district: string | null;
+  risk_score: number;
+  risk_category: RiskCategory;
+  detection_type: string;
+  confidence: number;
+  estimated_area_hectares: number;
+  first_detected_days_ago: number;
+  nearest_water_body: NearbyFeatureOut | null;
+  nearest_protected_area: NearbyFeatureOut | null;
+  recommended_action: string;
+  previous_observation: ObservationOut;
+  current_observation: ObservationOut;
+  model_name: string;
+  model_version: string;
+  requires_verification: boolean;
+  disclaimer: string;
+}
+
+export interface SatelliteHistoryEntry {
+  id: string;
+  detection_type: string;
+  confidence: number;
+  estimated_area_hectares: number | null;
+  observation_date: string;
+  review_status: string;
+  latitude: number;
+  longitude: number;
+}

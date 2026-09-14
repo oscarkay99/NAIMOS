@@ -32,20 +32,25 @@ field reports and AI detections are entirely synthetic.
    AI-detected signals, proximity to water body, activity trend).
 5. Review the **Intelligence Timeline** and existing evidence/AI object
    detection on the seeded photo placeholder.
-6. Log in as `officer@naimos.gov.gh` → **Field Reporting** → submit a new
+6. As `analyst@naimos.gov.gh` → **Satellite Monitoring** → pick a fresh AOI
+   (e.g. click anywhere away from existing hotspots on the imagery) → **Run
+   AI Change Detection Scan**. See the live "HIGH-RISK AREA DETECTED" card
+   computed by the real risk engine, then click through to pre-fill a new
+   field incident from the detected coordinates.
+7. Log in as `officer@naimos.gov.gh` → **Field Reporting** → submit a new
    incident, or use **Voice-to-Report**: upload any audio file, review the
    AI-drafted transcript + structured extraction, and approve it.
-7. Log in as `analyst@naimos.gov.gh` or `supervisor@naimos.gov.gh` → open the
+8. Log in as `analyst@naimos.gov.gh` or `supervisor@naimos.gov.gh` → open the
    incident → **Change Status** to `VERIFIED` with a reason (writes to the
    timeline and audit log).
-8. Log in as `pro@naimos.gov.gh` → **Communications** → generate an
+9. Log in as `pro@naimos.gov.gh` → **Communications** → generate an
    **Executive Brief** - note the VERIFIED FACTS / AI-GENERATED
    INTERPRETATION / SOURCE RECORDS separation.
-9. **Intelligence Assistant** → ask "Show emerging hotspots" or "Which
-   high-risk areas have not been field verified?" and see it answer strictly
-   from the database.
-10. **Audit Logs** (as `auditor@naimos.gov.gh`) → see every action from the
-    walkthrough recorded.
+10. **Intelligence Assistant** → ask "Show emerging hotspots" or "Which
+    high-risk areas have not been field verified?" and see it answer strictly
+    from the database.
+11. **Audit Logs** (as `auditor@naimos.gov.gh`) → see every action from the
+    walkthrough recorded, including the satellite scan.
 
 ## Seeded scenarios (spec section 42)
 

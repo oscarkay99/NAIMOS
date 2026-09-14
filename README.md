@@ -25,6 +25,12 @@ subject to human verification. See the full product spec in
 - **Geospatial intelligence map** - MapLibre (token-free tiles), layered
   incidents/hotspots/water bodies/protected areas/forest reserves/AI detections,
   click-to-inspect Location Intelligence panel.
+- **Satellite Monitoring** - real current satellite imagery (Esri World
+  Imagery, no key needed) for any AOI, plus an AI change-detection scan that
+  persists a genuine `ai_detections` row and produces a live-computed
+  "HIGH-RISK AREA DETECTED" card via the same risk engine used everywhere
+  else. The pixel-level analysis is simulated (see AI.md); everything
+  downstream of it is real.
 - **Incident lifecycle** - CRUD, status workflow with full audit trail.
 - **Evidence management** - hashed, versioned uploads; originals are never
   overwritten.
@@ -39,9 +45,9 @@ subject to human verification. See the full product spec in
 - **Analytics** - incidents over time/region/status, verification rate, team
   workload, driven by live DB aggregates.
 
-See the build plan and explicitly deferred scope (native mobile app, live
-satellite imagery, Elasticsearch, SMS/WhatsApp/email providers, exhaustive
-security test suite) in `ARCHITECTURE.md`.
+See the build plan and explicitly deferred scope (native mobile app, a real
+time-series satellite feed, Elasticsearch, SMS/WhatsApp/email providers,
+exhaustive security test suite) in `ARCHITECTURE.md`.
 
 ## Quick start
 

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Topbar } from "@/components/Topbar";
 import { api, ApiError } from "@/lib/api";
 import type { IncidentType, VoiceExtraction, VoiceReportTranscribeOut } from "@/lib/types";
@@ -25,7 +25,13 @@ export default function FieldReportingPage() {
           <TabButton active={tab === "incident"} onClick={() => setTab("incident")} label="New Incident" />
           <TabButton active={tab === "voice"} onClick={() => setTab("voice")} label="Voice-to-Report" />
         </div>
-        {tab === "incident" ? <IncidentForm /> : <VoiceReportFlow />}
+        {tab === "incident" ? (
+          <Suspense fallback={null}>
+            <IncidentForm />
+          </Suspense>
+        ) : (
+          <VoiceReportFlow />
+        )}
       </div>
     </>
   );
@@ -46,10 +52,16 @@ function TabButton({ active, onClick, label }: { active: boolean; onClick: () =>
 
 function IncidentForm() {
   const router = useRouter();
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [lat, setLat] = useState("");
-  const [lon, setLon] = useState("");
+  const searchParams = useSearchParams();
+  const prefillLat = searchParams.get("lat");
+  const prefillLon = searchParams.get("lon");
+
+  const [title, setTitle] = useState(prefillLat ? "AI-flagged area - pending verification" : "");
+  const [description, setDescription] = useState(
+    prefillLat ? "Pre-filled from a satellite AI change-detection scan. Verify on site before confirming details." : ""
+  );
+  const [lat, setLat] = useState(prefillLat || "");
+  const [lon, setLon] = useState(prefillLon || "");
   const [incidentType, setIncidentType] = useState<IncidentType>("SUSPECTED_ILLEGAL_MINING");
   const [waterBody, setWaterBody] = useState(false);
   const [protectedArea, setProtectedArea] = useState(false);
@@ -58,6 +70,11 @@ function IncidentForm() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (prefillLat) setLat(prefillLat);
+    if (prefillLon) setLon(prefillLon);
+  }, [prefillLat, prefillLon]);
 
   function useMyLocation() {
     if (!navigator.geolocation) return;
@@ -99,6 +116,11 @@ function IncidentForm() {
 
   return (
     <form onSubmit={submit} className="bg-surface border border-border rounded-lg p-5 space-y-4">
+      {prefillLat && (
+        <div className="rounded-md bg-purple-50 border border-purple-200 px-3 py-2 text-xs text-purple-800">
+          Coordinates pre-filled from a Satellite Monitoring AI detection. Review and confirm all fields on site.
+        </div>
+      )}
       <Field label="Title">
         <input required value={title} onChange={(e) => setTitle(e.target.value)} className="input" />
       </Field>

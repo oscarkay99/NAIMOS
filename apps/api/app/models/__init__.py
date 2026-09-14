@@ -12,6 +12,7 @@ from app.models import (  # noqa: F401
     investigation,
     notification,
     report,
+    satellite,
     system,
     user,
 )
