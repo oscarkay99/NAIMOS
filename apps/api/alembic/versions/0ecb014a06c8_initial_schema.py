@@ -423,7 +423,7 @@ def upgrade() -> None:
 
     # --- Manual GIST spatial indexes (geoalchemy2 columns use spatial_index=False
     # to avoid a double-CREATE-INDEX conflict with autogenerate; indexes are
-    # created explicitly here instead — section 54). ---
+    # created explicitly here instead - section 54). ---
     op.create_index('idx_regions_centroid', 'regions', ['centroid'], unique=False, postgresql_using='gist')
     op.create_index('idx_districts_centroid', 'districts', ['centroid'], unique=False, postgresql_using='gist')
     op.create_index('idx_communities_location', 'communities', ['location'], unique=False, postgresql_using='gist')

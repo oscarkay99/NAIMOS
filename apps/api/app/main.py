@@ -8,7 +8,7 @@ settings = get_settings()
 
 app = FastAPI(
     title="NAIMOS Intelligence API",
-    description="AI-Assisted Illegal Mining Intelligence & Operations Platform — decision-support backend.",
+    description="AI-Assisted Illegal Mining Intelligence & Operations Platform - decision-support backend.",
     version="0.1.0",
 )
 

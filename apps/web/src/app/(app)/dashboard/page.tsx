@@ -97,7 +97,7 @@ export default function DashboardPage() {
         </div>
 
         {!hasPermission("analytics:view") && (
-          <p className="text-xs text-slate-400">Trend analytics require analytics:view permission — see Analytics for full charts.</p>
+          <p className="text-xs text-slate-400">Trend analytics require analytics:view permission - see Analytics for full charts.</p>
         )}
       </div>
     </>

@@ -60,7 +60,7 @@ async def submit_voice_report(
     db: Session = Depends(get_db),
     user: User = Depends(require_permission("field_report:create")),
 ) -> VoiceReportTranscribeOut:
-    """Section 10 — voice-to-report. The original audio is preserved verbatim;
+    """Section 10 - voice-to-report. The original audio is preserved verbatim;
     the transcript and extraction are AI-generated DRAFTS the officer must
     review and approve via /voice/approve before they become part of the record."""
     content = await file.read()
@@ -102,7 +102,7 @@ def approve_voice_report(
     user: User = Depends(require_permission("field_report:create")),
 ) -> FieldReport:
     """The officer confirms (optionally edits) the AI draft. Original audio and
-    the original AI transcript/extraction are never overwritten — only the
+    the original AI transcript/extraction are never overwritten - only the
     officer-approved fields are updated, and both remain queryable via the
     field_reports row for audit purposes."""
     report = db.get(FieldReport, payload.field_report_id)

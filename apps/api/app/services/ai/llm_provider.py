@@ -4,7 +4,7 @@ calls) unless OPENAI_API_KEY is set in the environment, in which case text
 generation is routed to a real OpenAI-compatible endpoint.
 
 Voice transcription and image object-detection stay on the mock implementation
-in this build regardless of provider — wiring real Whisper/vision endpoints is
+in this build regardless of provider - wiring real Whisper/vision endpoints is
 future work (section 55: don't fake integrations that aren't actually
 connected) and would need real credentials to test.
 """

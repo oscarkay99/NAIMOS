@@ -1,5 +1,5 @@
 """Report / PRO communications generator (sections 16-18). Every figure in the
-output is pulled directly from the database — never invented. Output always
+output is pulled directly from the database - never invented. Output always
 separates VERIFIED FACTS from AI-GENERATED INTERPRETATION and cites the
 backing incident IDs so a human can trace every claim."""
 
@@ -52,7 +52,7 @@ def generate_report(
             content_markdown=(
                 "## Insufficient verified data\n\n"
                 "No incidents matched the selected filters. No report can be generated "
-                "from an empty result set — figures are never fabricated."
+                "from an empty result set - figures are never fabricated."
             ),
             source_incident_ids=[],
         )
@@ -66,7 +66,7 @@ def generate_report(
     recent = sorted(incidents, key=lambda i: i.created_at, reverse=True)[:5]
 
     lines = [f"# {REPORT_TITLES.get(report_type, 'Report')}", ""]
-    lines.append("DEMO ENVIRONMENT — DATA IS SIMULATED" if any(i.is_demo for i in incidents) else "")
+    lines.append("DEMO ENVIRONMENT - DATA IS SIMULATED" if any(i.is_demo for i in incidents) else "")
     lines.append("")
 
     lines.append("## VERIFIED FACTS")
@@ -79,19 +79,19 @@ def generate_report(
 
     lines.append("## RECENT DEVELOPMENTS")
     for i in recent:
-        lines.append(f"- `{i.reference_number}` — {i.title} — status: {i.status.value} — {i.created_at.date().isoformat()}")
+        lines.append(f"- `{i.reference_number}` - {i.title} - status: {i.status.value} - {i.created_at.date().isoformat()}")
     lines.append("")
 
     lines.append("## AI-GENERATED INTERPRETATION")
     lines.append(
         f"- {len(high_risk)} location(s) carry an AI-generated operational risk score of 61+ "
-        "(High/Critical). This reflects investigation priority, not confirmed illegal activity — "
+        "(High/Critical). This reflects investigation priority, not confirmed illegal activity - "
         "all require field verification before any public statement names a location."
     )
     if high_risk:
         lines.append("- Highest-priority locations for field verification:")
         for i in sorted(high_risk, key=lambda x: x.risk_score or 0, reverse=True)[:5]:
-            lines.append(f"  - `{i.reference_number}` — risk score {i.risk_score} (AI-generated, requires verification)")
+            lines.append(f"  - `{i.reference_number}` - risk score {i.risk_score} (AI-generated, requires verification)")
     lines.append("")
 
     lines.append("## DATA GAPS")

@@ -42,7 +42,7 @@ def nearest_protected_area(db: Session, lat: float, lon: float) -> dict | None:
 
 def district_for_point(db: Session, lat: float, lon: float, max_distance_km: float = 50) -> dict | None:
     """Ghana district boundaries aren't loaded in this demo (no boundary
-    polygons seeded) — falls back to nearest district centroid within range."""
+    polygons seeded) - falls back to nearest district centroid within range."""
     row = db.execute(
         text(
             """

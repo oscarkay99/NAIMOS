@@ -61,7 +61,7 @@ export default function CommunicationsPage() {
           </div>
           <p className="text-xs text-slate-400 mt-3">
             Every figure below is pulled directly from verified database records. Sections labeled
-            AI-GENERATED INTERPRETATION reflect risk analysis, not confirmed fact — see the underlying incident IDs
+            AI-GENERATED INTERPRETATION reflect risk analysis, not confirmed fact - see the underlying incident IDs
             for traceability.
           </p>
         </div>
@@ -82,7 +82,7 @@ export default function CommunicationsPage() {
   );
 }
 
-/** Minimal markdown renderer (headings, bullet lists, bold) — avoids pulling
+/** Minimal markdown renderer (headings, bullet lists, bold) - avoids pulling
  * in a full markdown dependency for this demo report viewer. */
 function MarkdownLite({ content }: { content: string }) {
   const lines = content.split("\n");

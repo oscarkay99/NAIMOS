@@ -3,7 +3,7 @@
 This is the single source of truth used both to seed the roles/permissions
 tables and to document the RBAC matrix. Server-side route dependencies
 (app/api/deps.py) always check against the database-backed role/permission
-assignment for the authenticated user — never against this dict directly —
+assignment for the authenticated user - never against this dict directly -
 so this module only defines the *intended* seed state (section 23).
 """
 

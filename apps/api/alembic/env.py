@@ -25,11 +25,11 @@ _MANUAL_SPATIAL_INDEXES = {
 
 
 def include_object(object, name, type_, reflected, compare_to):
-    # PostGIS system table — not part of the application schema.
+    # PostGIS system table - not part of the application schema.
     if type_ == "table" and name == "spatial_ref_sys":
         return False
     # GIST indexes on Geometry columns (spatial_index=False) are created by
-    # hand in the initial migration and aren't declared in the ORM metadata —
+    # hand in the initial migration and aren't declared in the ORM metadata -
     # skip them so autogenerate doesn't propose dropping them every time.
     if type_ == "index" and name in _MANUAL_SPATIAL_INDEXES:
         return False

@@ -16,7 +16,7 @@ permission codes (`app/core/permissions.py`), stored in the database
 Every protected route declares its required permission via the
 `require_permission(code)` FastAPI dependency (`app/api/deps.py`), which
 checks the authenticated user's role against the **database-backed**
-permission set — never a frontend-only check. The frontend also hides
+permission set - never a frontend-only check. The frontend also hides
 nav items/controls the user lacks permission for, but that is UX only; the
 API enforces the real boundary (verified by `tests/test_auth_rbac.py`).
 
@@ -33,7 +33,7 @@ API updates or deletes an audit row.
 
 `incidents.classification` (`PUBLIC` / `INTERNAL` / `SENSITIVE` /
 `RESTRICTED`) exists per section 26. This prototype does not yet gate reads
-by classification level beyond role-based permissions — a full build would
+by classification level beyond role-based permissions - a full build would
 add a classification check alongside `require_permission`.
 
 ## Evidence integrity
@@ -44,7 +44,7 @@ overwriting the original (section 11).
 
 ## AI query safety
 
-See AI.md — the assistant only runs a fixed set of parametrized queries
+See AI.md - the assistant only runs a fixed set of parametrized queries
 against a `SELECT`-only Postgres role, with a query timeout and row limit.
 
 ## What's not hardened in this prototype
@@ -52,7 +52,7 @@ against a `SELECT`-only Postgres role, with a query timeout and row limit.
 CSRF protection (not applicable to this bearer-token JSON API, but would
 matter for a cookie-based session), rate limiting, structured secret
 management beyond `.env`, and the full security test suite (SQL injection /
-role escalation / malicious upload fuzzing) described in spec section 46 —
+role escalation / malicious upload fuzzing) described in spec section 46 -
 only representative RBAC-denial tests are included (`tests/test_auth_rbac.py`).
 Treat this as a functional prototype, not a hardened production deployment.
 

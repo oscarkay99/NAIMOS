@@ -32,8 +32,8 @@ def assistant_query(
     user: User = Depends(require_permission("ai:query")),
 ) -> AssistantQueryResponse:
     """NAIMOS Intelligence Assistant (section 19/20). Runs ONLY allowlisted,
-    parametrized queries against the read-only DB role — never free-form
-    AI-generated SQL — and never answers beyond what the database contains."""
+    parametrized queries against the read-only DB role - never free-form
+    AI-generated SQL - and never answers beyond what the database contains."""
     start = time.monotonic()
     intent = detect_intent(payload.question)
 
@@ -43,7 +43,7 @@ def assistant_query(
             "supported questions (e.g. districts with most verified incidents, "
             "emerging hotspots, high-risk unverified areas, incidents near water "
             "bodies, region summaries, incidents open more than N days, or a "
-            "briefing for today). I don't recognize this question — insufficient "
+            "briefing for today). I don't recognize this question - insufficient "
             "verified data to answer safely."
         )
         row_count = 0
@@ -85,7 +85,7 @@ def analyze_image(
     db: Session = Depends(get_db),
     user: User = Depends(require_permission("ai:analyze_image")),
 ) -> ImageAnalysisOut:
-    """Section 12 — object-detection aid only. Never facial recognition, never
+    """Section 12 - object-detection aid only. Never facial recognition, never
     treated as legal proof."""
     evidence = db.get(Evidence, evidence_id)
     if evidence is None:
@@ -126,7 +126,7 @@ def submit_feedback(
     db: Session = Depends(get_db),
     user: User = Depends(require_permission("ai:analyze_image")),
 ) -> AIDetection:
-    """Human feedback loop (section 34) — an authorized user marks an AI
+    """Human feedback loop (section 34) - an authorized user marks an AI
     detection useful/not useful/confirmed/rejected/needs review."""
     detection = db.get(AIDetection, detection_id)
     if detection is None:

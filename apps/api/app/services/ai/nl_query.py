@@ -178,7 +178,7 @@ def run_intent(db: Session, intent: str, question: str) -> QueryOutcome:
 def format_answer(outcome: QueryOutcome) -> str:
     if not outcome.rows:
         return "Insufficient verified data. No records matched this query in the database."
-    lines = [f"{outcome.sql_description} — {len(outcome.rows)} result(s):"]
+    lines = [f"{outcome.sql_description} - {len(outcome.rows)} result(s):"]
     for row in outcome.rows[:10]:
         lines.append(" - " + ", ".join(f"{k}: {v}" for k, v in row.items()))
     if len(outcome.rows) > 10:

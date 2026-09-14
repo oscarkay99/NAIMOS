@@ -42,14 +42,14 @@ export default function AuditPage() {
                     <td className="px-4 py-2 text-slate-400 whitespace-nowrap">{log.created_at.slice(0, 19).replace("T", " ")}</td>
                     <td className="px-4 py-2 font-medium text-navy-900">{log.action}</td>
                     <td className="px-4 py-2 text-slate-500">
-                      {log.entity_type ? `${log.entity_type}${log.entity_id ? ` · ${log.entity_id.slice(0, 8)}` : ""}` : "—"}
+                      {log.entity_type ? `${log.entity_type}${log.entity_id ? ` · ${log.entity_id.slice(0, 8)}` : ""}` : "-"}
                     </td>
                     <td className="px-4 py-2 text-slate-500 max-w-xs truncate">
                       {log.previous_value && log.new_value
                         ? `${log.previous_value} → ${log.new_value}`
-                        : log.new_value || "—"}
+                        : log.new_value || "-"}
                     </td>
-                    <td className="px-4 py-2 text-slate-500 max-w-xs truncate">{log.reason || "—"}</td>
+                    <td className="px-4 py-2 text-slate-500 max-w-xs truncate">{log.reason || "-"}</td>
                   </tr>
                 ))}
               </tbody>

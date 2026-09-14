@@ -3,7 +3,7 @@
 Regions/districts/rivers/forest reserves use real, publicly known Ghanaian
 geography (appropriate for public geographic features per section 40).
 ALL incidents, field reports, evidence, and AI detections are synthetic
-demo records (is_demo=True) with synthetic coordinates — never presented as
+demo records (is_demo=True) with synthetic coordinates - never presented as
 real NAIMOS operational data. Run with:
 
     python -m app.seeds.seed_data
@@ -258,16 +258,16 @@ def seed_incidents(db: Session, regions, districts, users) -> list[Incident]:
     )
     incidents.append(i1)
 
-    # Scenario 2: existing hotspot expands — older + newer report near the same location
+    # Scenario 2: existing hotspot expands - older + newer report near the same location
     i2a = _make_incident(
-        db, "000102", "Initial report — land clearing observed",
+        db, "000102", "Initial report - land clearing observed",
         "Community report of vegetation clearing consistent with early-stage mining preparation.",
         5.4400, -2.1600, regions["Western"], districts["Prestea Huni-Valley"],
         IncidentType.VEGETATION_LOSS, IncidentStatus.UNDER_REVIEW,
         VerificationStatus.UNVERIFIED, False, False, officer, days_ago=45,
     )
     i2b = _make_incident(
-        db, "000103", "Follow-up report — expanded excavation observed",
+        db, "000103", "Follow-up report - expanded excavation observed",
         "Second report at the same location indicates the excavation area has expanded "
         "significantly since the first report.",
         5.4420, -2.1580, regions["Western"], districts["Prestea Huni-Valley"],
@@ -276,9 +276,9 @@ def seed_incidents(db: Session, regions, districts, users) -> list[Incident]:
     )
     incidents.extend([i2a, i2b])
 
-    # Scenario 6: field verification changes incident status — full lifecycle
+    # Scenario 6: field verification changes incident status - full lifecycle
     i6 = _make_incident(
-        db, "000104", "Verified illegal mining site — Amansie West",
+        db, "000104", "Verified illegal mining site - Amansie West",
         "Field team confirmed active excavation with heavy equipment approximately 600m from "
         "forest reserve boundary.",
         6.3200, -1.9500, regions["Ashanti"], districts["Amansie West"],
@@ -289,7 +289,7 @@ def seed_incidents(db: Session, regions, districts, users) -> list[Incident]:
     for previous, new, reason, days_ago in [
         (None, IncidentStatus.NEW, "Incident created", 10),
         (IncidentStatus.NEW, IncidentStatus.UNDER_REVIEW, "Assigned for analyst review", 9),
-        (IncidentStatus.UNDER_REVIEW, IncidentStatus.FIELD_VERIFICATION_REQUIRED, "Risk score elevated — field visit required", 8),
+        (IncidentStatus.UNDER_REVIEW, IncidentStatus.FIELD_VERIFICATION_REQUIRED, "Risk score elevated - field visit required", 8),
         (IncidentStatus.FIELD_VERIFICATION_REQUIRED, IncidentStatus.VERIFIED, "Field verification completed", 2),
     ]:
         db.add(IncidentStatusHistory(
@@ -301,16 +301,16 @@ def seed_incidents(db: Session, regions, districts, users) -> list[Incident]:
     # Ankobra River location becomes a genuine HIGH-risk demo hotspot with a
     # rich, explainable factor breakdown (section 3 / section 43 demo flow).
     cluster = [
-        ("000114", "Second field report — same hotspot", "Community report corroborates excavator activity at the same site.",
+        ("000114", "Second field report - same hotspot", "Community report corroborates excavator activity at the same site.",
          5.3215, -2.2255, "Western", "Tarkwa-Nsuaem", IncidentType.SUSPECTED_ILLEGAL_MINING,
          IncidentStatus.NEW, VerificationStatus.UNVERIFIED, True, False, 1, Priority.HIGH),
-        ("000115", "Third field report — same hotspot", "Additional observation of continued excavation near the river.",
+        ("000115", "Third field report - same hotspot", "Additional observation of continued excavation near the river.",
          5.3190, -2.2285, "Western", "Tarkwa-Nsuaem", IncidentType.LAND_DISTURBANCE,
          IncidentStatus.NEW, VerificationStatus.UNVERIFIED, True, False, 2, Priority.HIGH),
-        ("000116", "Fourth field report — same hotspot", "Repeated observation, activity appears ongoing.",
+        ("000116", "Fourth field report - same hotspot", "Repeated observation, activity appears ongoing.",
          5.3225, -2.2240, "Western", "Tarkwa-Nsuaem", IncidentType.SUSPECTED_ILLEGAL_MINING,
          IncidentStatus.NEW, VerificationStatus.UNVERIFIED, True, False, 3, Priority.HIGH),
-        ("000117", "Historical report — same area", "Older report retained to establish activity history for this location.",
+        ("000117", "Historical report - same area", "Older report retained to establish activity history for this location.",
          5.3180, -2.2300, "Western", "Tarkwa-Nsuaem", IncidentType.OTHER,
          IncidentStatus.CLOSED, VerificationStatus.UNVERIFIED, True, False, 60, Priority.LOW),
     ]
@@ -326,19 +326,19 @@ def seed_incidents(db: Session, regions, districts, users) -> list[Incident]:
         ("000105", "Report near Birim River", "Community report of water discoloration and equipment noise.",
          6.2600, -0.9610, "Eastern", "Birim North", IncidentType.WATER_POLLUTION,
          IncidentStatus.NEW, VerificationStatus.UNVERIFIED, True, False, 1, Priority.MEDIUM),
-        ("000106", "Unauthorized equipment reported — Obuasi", "Excavator observed operating without visible permit signage.",
+        ("000106", "Unauthorized equipment reported - Obuasi", "Excavator observed operating without visible permit signage.",
          6.1900, -1.6900, "Ashanti", "Obuasi Municipal", IncidentType.UNAUTHORIZED_EQUIPMENT,
          IncidentStatus.UNDER_REVIEW, VerificationStatus.UNVERIFIED, False, False, 6, Priority.MEDIUM),
         ("000107", "Land disturbance near Offin River", "AI change detection flagged exposed soil near river bend.",
          5.9200, -1.7830, "Central", "Upper Denkyira East", IncidentType.LAND_DISTURBANCE,
          IncidentStatus.FIELD_VERIFICATION_REQUIRED, VerificationStatus.PENDING_VERIFICATION, True, False, 2, Priority.HIGH),
-        ("000108", "Closed case — no activity confirmed", "Field verification found no evidence of mining activity.",
+        ("000108", "Closed case - no activity confirmed", "Field verification found no evidence of mining activity.",
          6.2600, -0.6500, "Eastern", "Atiwa West", IncidentType.OTHER,
          IncidentStatus.CLOSED, VerificationStatus.REJECTED, False, True, 20, Priority.LOW),
-        ("000109", "Vegetation clearing — Wassa Amenfi West", "Satellite-proxy signal indicates new clearing pattern.",
+        ("000109", "Vegetation clearing - Wassa Amenfi West", "Satellite-proxy signal indicates new clearing pattern.",
          5.7800, -2.3800, "Western", "Wassa Amenfi West", IncidentType.VEGETATION_LOSS,
          IncidentStatus.NEW, VerificationStatus.UNVERIFIED, False, False, 0, Priority.MEDIUM),
-        ("000110", "Historical case — Adansi South", "Older resolved case retained for historical trend analysis.",
+        ("000110", "Historical case - Adansi South", "Older resolved case retained for historical trend analysis.",
          6.0600, -1.3600, "Ashanti", "Adansi South", IncidentType.SUSPECTED_ILLEGAL_MINING,
          IncidentStatus.CLOSED, VerificationStatus.VERIFIED, False, False, 90, Priority.MEDIUM),
     ]

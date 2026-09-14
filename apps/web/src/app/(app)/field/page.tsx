@@ -229,7 +229,7 @@ function VoiceReportFlow() {
     <div className="space-y-5">
       <div className="bg-surface border border-border rounded-lg p-5">
         <p className="text-xs text-slate-500 mb-3">
-          Upload a voice note (any audio file). The AI will transcribe it and draft structured fields — you must
+          Upload a voice note (any audio file). The AI will transcribe it and draft structured fields - you must
           review and approve before it becomes part of the record. The original audio is always preserved.
         </p>
         <form onSubmit={submitVoiceNote} className="flex flex-col sm:flex-row gap-3">
@@ -253,7 +253,7 @@ function VoiceReportFlow() {
       {result && (
         <div className="bg-surface border border-border rounded-lg p-5 space-y-4">
           <div className="rounded-md bg-purple-50 border border-purple-200 px-3 py-1.5 text-[11px] text-purple-800 font-medium">
-            AI-GENERATED DRAFT ({result.model_name} {result.model_version}) — REQUIRES OFFICER REVIEW
+            AI-GENERATED DRAFT ({result.model_name} {result.model_version}) - REQUIRES OFFICER REVIEW
           </div>
 
           <div>
@@ -268,9 +268,9 @@ function VoiceReportFlow() {
 
           {editedExtraction && (
             <div className="grid grid-cols-2 gap-3 text-sm">
-              <ExtractField label="Time mentioned" value={editedExtraction.time_mentioned || "—"} />
-              <ExtractField label="Equipment mentioned" value={editedExtraction.equipment_mentioned.join(", ") || "—"} />
-              <ExtractField label="Water body mentioned" value={editedExtraction.water_body_mentioned || "—"} />
+              <ExtractField label="Time mentioned" value={editedExtraction.time_mentioned || "-"} />
+              <ExtractField label="Equipment mentioned" value={editedExtraction.equipment_mentioned.join(", ") || "-"} />
+              <ExtractField label="Water body mentioned" value={editedExtraction.water_body_mentioned || "-"} />
               <ExtractField label="Status" value={editedExtraction.status} />
             </div>
           )}

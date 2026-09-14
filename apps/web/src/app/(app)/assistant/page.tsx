@@ -49,7 +49,7 @@ export default function AssistantPage() {
       <div className="p-6 max-w-3xl mx-auto w-full flex flex-col gap-5">
         <div className="bg-navy-950 text-white rounded-lg p-4 text-xs leading-relaxed">
           This assistant answers strictly from verified database records using a fixed set of supported query
-          intents — it never runs free-form AI-generated SQL and never invents figures. If a question has no
+          intents - it never runs free-form AI-generated SQL and never invents figures. If a question has no
           matching data, it will say so.
         </div>
 

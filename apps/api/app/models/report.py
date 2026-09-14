@@ -10,7 +10,7 @@ from app.db.base import Base, now_utc, uuid_pk
 
 class Report(Base):
     """A generated intelligence report or PRO communication artifact. Content is
-    built only from database-backed sources — see report_sources (section 16/17)."""
+    built only from database-backed sources - see report_sources (section 16/17)."""
 
     __tablename__ = "reports"
 

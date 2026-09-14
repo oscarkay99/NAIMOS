@@ -1,7 +1,7 @@
 """Explainable, rule-based Operational Risk / Investigation Priority Score
 (spec section 3). This is deliberately NOT a black box: every point on the
 0-100 score is attributable to a named, inspectable factor, and the score
-represents where human investigation should be prioritized — never a
+represents where human investigation should be prioritized - never a
 certainty that illegal mining is occurring.
 """
 
@@ -104,7 +104,7 @@ def calculate_risk(db: Session, lat: float, lon: float, exclude_incident_id=None
         pts = min(detections * 10, 20)
         factors.append(RiskFactorResult(
             "AI-detected land disturbance signals", pts,
-            f"{detections} unverified AI change-detection signal(s) nearby — requires field verification"
+            f"{detections} unverified AI change-detection signal(s) nearby - requires field verification"
         ))
 
     water = nearest_water_body(db, lat, lon)

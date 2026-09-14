@@ -1,6 +1,6 @@
 """Local-filesystem StorageProvider. Swap for an S3-compatible implementation
 in production by adding a class with the same interface and switching
-STORAGE_PROVIDER (section 55 — provider abstraction, no premature integration)."""
+STORAGE_PROVIDER (section 55 - provider abstraction, no premature integration)."""
 
 import hashlib
 import uuid

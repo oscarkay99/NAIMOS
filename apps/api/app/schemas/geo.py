@@ -31,7 +31,7 @@ class MapFeature(ORMModel):
 
 
 class LocationIntelligence(ORMModel):
-    """Section 59 — full context for a selected map location."""
+    """Section 59 - full context for a selected map location."""
 
     latitude: float
     longitude: float

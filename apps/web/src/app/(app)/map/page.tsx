@@ -137,14 +137,14 @@ export default function MapPage() {
               </div>
 
               <dl className="text-xs space-y-2">
-                <Row label="Region" value={intelligence.region || "—"} />
-                <Row label="District" value={intelligence.district || "—"} />
+                <Row label="Region" value={intelligence.region || "-"} />
+                <Row label="District" value={intelligence.district || "-"} />
                 <Row
                   label="Nearest water body"
                   value={
                     intelligence.nearest_water_body_name
                       ? `${intelligence.nearest_water_body_name} (${intelligence.nearest_water_body_distance_km} km)`
-                      : "—"
+                      : "-"
                   }
                 />
                 <Row
@@ -152,7 +152,7 @@ export default function MapPage() {
                   value={
                     intelligence.nearest_protected_area_name
                       ? `${intelligence.nearest_protected_area_name} (${intelligence.nearest_protected_area_distance_km} km)`
-                      : "—"
+                      : "-"
                   }
                 />
                 <Row label="Historical incidents (5km)" value={String(intelligence.historical_incident_count)} />
@@ -165,7 +165,7 @@ export default function MapPage() {
                 <p className="text-[11px] uppercase tracking-wide text-slate-400 mb-1">Recommended next step</p>
                 <p className="text-sm font-medium">{intelligence.recommended_action}</p>
                 <p className="text-[10px] text-slate-400 mt-1.5">
-                  AI-generated operational suggestion for human review — not an autonomous instruction.
+                  AI-generated operational suggestion for human review - not an autonomous instruction.
                 </p>
               </div>
             </div>

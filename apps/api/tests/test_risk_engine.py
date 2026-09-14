@@ -4,7 +4,7 @@ from app.services.risk.engine import calculate_risk
 
 def test_risk_score_is_explainable_and_bounded(db):
     """The seeded Ankobra River hotspot should score HIGH with a non-empty,
-    labeled factor breakdown — never a black-box number (section 3)."""
+    labeled factor breakdown - never a black-box number (section 3)."""
     result = calculate_risk(db, lat=5.3200, lon=-2.2270)
     assert 0 <= result.score <= 100
     assert result.category == RiskCategory.from_score(result.score)

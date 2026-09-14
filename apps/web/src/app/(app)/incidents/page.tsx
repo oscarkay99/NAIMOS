@@ -103,7 +103,7 @@ export default function IncidentsPage() {
                     <td className="px-4 py-2.5">
                       <StatusBadge status={i.status} />
                     </td>
-                    <td className="px-4 py-2.5 text-xs font-semibold">{i.risk_score ?? "—"}</td>
+                    <td className="px-4 py-2.5 text-xs font-semibold">{i.risk_score ?? "-"}</td>
                     <td className="px-4 py-2.5 text-xs text-slate-400">{i.created_at.slice(0, 10)}</td>
                   </tr>
                 ))}

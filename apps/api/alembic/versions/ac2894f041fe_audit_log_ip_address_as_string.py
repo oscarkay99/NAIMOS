@@ -20,7 +20,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     # request.client.host isn't guaranteed to be a valid IP (e.g. test clients,
-    # some proxy configurations) — store as text rather than reject those writes.
+    # some proxy configurations) - store as text rather than reject those writes.
     op.alter_column('audit_logs', 'ip_address',
                existing_type=postgresql.INET(),
                type_=sa.String(length=64),

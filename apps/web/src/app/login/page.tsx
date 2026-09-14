@@ -39,7 +39,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="bg-surface rounded-xl shadow-xl p-8 space-y-5">
           <div className="rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800 font-medium">
-            DEMO ENVIRONMENT — DATA IS SIMULATED
+            DEMO ENVIRONMENT - DATA IS SIMULATED
           </div>
 
           <div>

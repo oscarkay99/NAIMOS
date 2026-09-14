@@ -20,7 +20,7 @@ _SAMPLE_TRANSCRIPT = (
 class MockLLMProvider(LLMProvider):
     """Deterministic demo provider. Every output is derived from its input so
     results are stable and reproducible, and always clearly DEMO-labeled by
-    callers — never presented as a live model result."""
+    callers - never presented as a live model result."""
 
     name = "mock-llm"
     version = "0.1.0-demo"

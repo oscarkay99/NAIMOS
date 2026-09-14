@@ -53,7 +53,7 @@ def map_features(
     )).mappings():
         category = RiskCategory.from_score(row["risk_score"]).value if row["risk_score"] is not None else None
         features.append(MapFeature(
-            id=str(row["id"]), layer="incident", name=f"{row['reference_number']} — {row['title']}",
+            id=str(row["id"]), layer="incident", name=f"{row['reference_number']} - {row['title']}",
             latitude=row["latitude"], longitude=row["longitude"], status=row["status"],
             risk_score=row["risk_score"], risk_category=category,
         ))
@@ -91,7 +91,7 @@ def location_intelligence(
     db: Session = Depends(get_db),
     user: User = Depends(require_permission("risk:view")),
 ) -> LocationIntelligence:
-    """Section 59 — full intelligence card for an arbitrary map click."""
+    """Section 59 - full intelligence card for an arbitrary map click."""
     located = district_for_point(db, lat, lon)
     risk = calculate_risk(db, lat, lon)
 

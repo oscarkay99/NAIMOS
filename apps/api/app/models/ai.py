@@ -40,7 +40,7 @@ class AIDetection(Base, TimestampMixin):
 
 
 class RiskScore(Base, TimestampMixin):
-    """Operational Risk / Investigation Priority Score for a location — NOT a
+    """Operational Risk / Investigation Priority Score for a location - NOT a
     certainty that illegal mining is occurring (section 3)."""
 
     __tablename__ = "risk_scores"
@@ -73,7 +73,7 @@ class RiskFactor(Base):
 
 class AIQuery(Base):
     """Audit trail for every natural-language query sent to the AI assistant
-    (section 20/35) — required for auditability of AI-mediated data access."""
+    (section 20/35) - required for auditability of AI-mediated data access."""
 
     __tablename__ = "ai_queries"
 

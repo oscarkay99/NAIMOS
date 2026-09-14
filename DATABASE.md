@@ -1,7 +1,7 @@
 # Database
 
 PostgreSQL + PostGIS. Schema is managed entirely through Alembic migrations in
-`apps/api/alembic/versions/` — do not hand-edit the database; add a migration.
+`apps/api/alembic/versions/` - do not hand-edit the database; add a migration.
 
 ## Core tables
 
@@ -30,7 +30,7 @@ PostgreSQL + PostGIS. Schema is managed entirely through Alembic migrations in
   `risk_scores` (one score, many labeled factors).
 - `evidence.incident_id` → `incidents`; `evidence_versions.evidence_id` →
   `evidence` (append-only version history).
-- `field_reports.incident_id` → `incidents` (nullable — a voice report can be
+- `field_reports.incident_id` → `incidents` (nullable - a voice report can be
   captured before an incident exists).
 - `report_sources` is a join table from a generated `reports` row to every
   `incidents.id` that backed it, so every generated statement is traceable.
@@ -40,7 +40,7 @@ PostgreSQL + PostGIS. Schema is managed entirely through Alembic migrations in
 All location columns are PostGIS `Geometry(SRID=4326)`. GIST spatial indexes
 are created by hand in the initial migration (`geoalchemy2`'s
 `spatial_index=True` auto-DDL is disabled to avoid double-creating them
-under Alembic — see the comment in `alembic/env.py`). Distance queries in
+under Alembic - see the comment in `alembic/env.py`). Distance queries in
 `services/geospatial/queries.py` cast to `geography` so results are real
 metres, not degrees.
 
@@ -48,4 +48,4 @@ metres, not degrees.
 
 `naimos_readonly` (created in `docker/init/01-extensions-and-roles.sql`,
 granted SELECT via `apps/api/scripts/grant_readonly.sql` after migrations
-run) is used exclusively by the AI assistant's query pipeline — see AI.md.
+run) is used exclusively by the AI assistant's query pipeline - see AI.md.

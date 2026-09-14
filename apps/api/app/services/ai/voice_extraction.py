@@ -1,7 +1,7 @@
 """Rule-based structured extraction from a voice-note transcript (section 10).
 Deliberately simple pattern matching rather than a black-box LLM call, so
 results are explainable and reproducible for the demo. The officer must
-review and approve the result before it becomes part of the record — this
+review and approve the result before it becomes part of the record - this
 function only proposes a draft."""
 
 import re

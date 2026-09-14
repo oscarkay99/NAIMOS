@@ -1,7 +1,7 @@
 # Demo Guide
 
 All data is synthetic (`is_demo=true`), clearly banner-labeled in the UI as
-**DEMO ENVIRONMENT — DATA IS SIMULATED**. Regions/districts and named rivers/
+**DEMO ENVIRONMENT - DATA IS SIMULATED**. Regions/districts and named rivers/
 forest reserves use real, public Ghanaian geography; incidents, evidence,
 field reports and AI detections are entirely synthetic.
 
@@ -25,7 +25,7 @@ field reports and AI detections are entirely synthetic.
 
 1. **Log in** as `admin@naimos.gov.gh` → National dashboard.
 2. **Map** → the Ankobra River hotspot near Tarkwa-Nsuaem (Western Region) is
-   the flagship demo location — click it.
+   the flagship demo location - click it.
 3. Location Intelligence panel shows **risk score 68 (HIGH)**.
 4. Open the incident (`NAIMOS-2026-000101`) → click **"Show breakdown"** on
    the risk panel to see the explainable factors (recent field reports,
@@ -39,7 +39,7 @@ field reports and AI detections are entirely synthetic.
    incident → **Change Status** to `VERIFIED` with a reason (writes to the
    timeline and audit log).
 8. Log in as `pro@naimos.gov.gh` → **Communications** → generate an
-   **Executive Brief** — note the VERIFIED FACTS / AI-GENERATED
+   **Executive Brief** - note the VERIFIED FACTS / AI-GENERATED
    INTERPRETATION / SOURCE RECORDS separation.
 9. **Intelligence Assistant** → ask "Show emerging hotspots" or "Which
    high-risk areas have not been field verified?" and see it answer strictly
@@ -49,24 +49,24 @@ field reports and AI detections are entirely synthetic.
 
 ## Seeded scenarios (spec section 42)
 
-1. Suspected hotspot near a water body — the Ankobra River cluster above.
-2. Existing hotspot expands — `NAIMOS-2026-000102`/`000103` near Prestea
+1. Suspected hotspot near a water body - the Ankobra River cluster above.
+2. Existing hotspot expands - `NAIMOS-2026-000102`/`000103` near Prestea
    Huni-Valley (older report, then a follow-up showing expansion).
-3. Voice-to-report — a pre-approved field report is seeded on the Ankobra
+3. Voice-to-report - a pre-approved field report is seeded on the Ankobra
    incident; submit a new one via the Field Reporting page to see the live
    flow.
-4. Evidence upload — a placeholder evidence file with a mock AI object-
+4. Evidence upload - a placeholder evidence file with a mock AI object-
    detection result is seeded on the Ankobra incident.
-5. Investigation assignment — Team Alpha (Western) is assigned to the
+5. Investigation assignment - Team Alpha (Western) is assigned to the
    Ankobra investigation.
-6. Field verification changes status — `NAIMOS-2026-000104` (Amansie West)
+6. Field verification changes status - `NAIMOS-2026-000104` (Amansie West)
    has a full NEW→VERIFIED history.
-7. PRO weekly briefing — Communications Centre.
-8. AI detects an anomaly — two `PENDING` `ai_detections` on the Ankobra
+7. PRO weekly briefing - Communications Centre.
+8. AI detects an anomaly - two `PENDING` `ai_detections` on the Ankobra
    incident.
-9. Human rejects an AI detection — a `REJECTED` detection on
+9. Human rejects an AI detection - a `REJECTED` detection on
    `NAIMOS-2026-000102`, reviewed by the environmental analyst.
-10. National risk map — Map page, all layers.
+10. National risk map - Map page, all layers.
 
 ## Resetting demo data
 

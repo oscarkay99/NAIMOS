@@ -1,13 +1,13 @@
 # AI in NAIMOS Intelligence
 
-## Guardrails (non-negotiable — section 44 of the spec)
+## Guardrails (non-negotiable - section 44 of the spec)
 
 The system never: fabricates facts or statistics, infers guilt, identifies an
 individual as a criminal, performs facial/biometric recognition, makes
 autonomous enforcement decisions, presents a prediction as a confirmed event,
 or exposes restricted information. Every AI-touched output is labeled with
-its source category — OBSERVED / REPORTED / AI-DETECTED / AI-PREDICTED /
-HUMAN-VERIFIED — and, where applicable, a confidence score.
+its source category - OBSERVED / REPORTED / AI-DETECTED / AI-PREDICTED /
+HUMAN-VERIFIED - and, where applicable, a confidence score.
 
 Concretely, in this codebase:
 
@@ -15,7 +15,7 @@ Concretely, in this codebase:
   string ending in *"not confirmation of illegal activity"*
   (`services/risk/engine.py`).
 - AI detections (`ai_detections` table) default `requires_verification=true`
-  and carry a `review_status` that starts `PENDING` — nothing is auto-verified.
+  and carry a `review_status` that starts `PENDING` - nothing is auto-verified.
 - Image analysis results are explicitly labeled *"an observation aid, not
   legal proof"* with *"No facial recognition or biometric identification is
   performed"* (`schemas/evidence.py::ImageAnalysisOut`).
@@ -29,11 +29,11 @@ Concretely, in this codebase:
 `services/ai/llm_provider.py` defines the interface; `get_llm_provider()`
 returns:
 
-- **`MockLLMProvider`** (default, no API key needed) — deterministic,
+- **`MockLLMProvider`** (default, no API key needed) - deterministic,
   clearly-labeled `[DEMO AI OUTPUT]` text; a fixed sample transcript for
   voice notes; a deterministic subset of sample object-detection labels for
   images.
-- **`OpenAILLMProvider`** (active once `OPENAI_API_KEY` is set) — real
+- **`OpenAILLMProvider`** (active once `OPENAI_API_KEY` is set) - real
   OpenAI-compatible `/chat/completions` calls for text generation. Voice
   transcription and image analysis still delegate to the mock implementation
   (see the module docstring for why).

@@ -27,7 +27,7 @@ class ObjectDetectionResult(ORMModel):
 
 
 class ImageAnalysisOut(ORMModel):
-    """AI image analysis result (section 12) — an observation aid only, never
+    """AI image analysis result (section 12) - an observation aid only, never
     legal proof, and never facial/biometric identification."""
 
     detections: list[ObjectDetectionResult]

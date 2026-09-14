@@ -2,16 +2,16 @@
 
 ## Stack
 
-- **apps/web** — Next.js 14 (App Router) + TypeScript + Tailwind CSS + MapLibre GL.
+- **apps/web** - Next.js 14 (App Router) + TypeScript + Tailwind CSS + MapLibre GL.
   Talks to the API only via `src/lib/api.ts` (JWT bearer auth, automatic refresh).
-- **apps/api** — FastAPI + SQLAlchemy 2 + Alembic + GeoAlchemy2, PostgreSQL/PostGIS.
-- **docker/** — Postgres+PostGIS and Redis via Docker Compose for local dev.
+- **apps/api** - FastAPI + SQLAlchemy 2 + Alembic + GeoAlchemy2, PostgreSQL/PostGIS.
+- **docker/** - Postgres+PostGIS and Redis via Docker Compose for local dev.
 
 ## Monorepo layout
 
 ```
 apps/
-  web/    Next.js frontend — dashboard, map, incidents, field UI, assistant, comms
+  web/    Next.js frontend - dashboard, map, incidents, field UI, assistant, comms
   api/    FastAPI backend
     app/
       core/        settings, security (JWT/bcrypt), RBAC permission matrix
@@ -40,20 +40,20 @@ actually connected to. Instead, each integration point is a small interface
 with a working mock implementation, so a real provider can be swapped in
 later without touching call sites:
 
-- **`LLMProvider`** (`services/ai/llm_provider.py`) — `MockLLMProvider` by
+- **`LLMProvider`** (`services/ai/llm_provider.py`) - `MockLLMProvider` by
   default (deterministic, labeled DEMO output); `OpenAILLMProvider` activates
   automatically when `OPENAI_API_KEY` is set, for text generation only. Voice
   transcription and image analysis stay on the mock implementation regardless
   (see the module docstring) until a real Whisper/vision integration is
   built and tested against real credentials.
-- **`StorageProvider`** (`services/storage/local_storage.py`) — local
+- **`StorageProvider`** (`services/storage/local_storage.py`) - local
   filesystem today; swap for an S3-compatible client via `STORAGE_PROVIDER`.
-- **Satellite imagery** — not implemented in this build. The spec's
+- **Satellite imagery** - not implemented in this build. The spec's
   `SatelliteProvider` interface, mock imagery, and change-detection UI are
   explicitly deferred; `ai_detections` already models what a real detector
   would emit (`detection_type`, `confidence`, `estimated_area_hectares`,
   `requires_verification`) so a real pipeline can populate the same table.
-- **Notifications** — the `notifications` table models channel + event type;
+- **Notifications** - the `notifications` table models channel + event type;
   no email/SMS/WhatsApp sender is wired up (nothing to fake without real
   credentials).
 
@@ -72,12 +72,12 @@ answer rather than a guess.
 `services/risk/engine.py` computes a 0–100 score from named, point-weighted
 signals (recent/historical nearby incidents, nearby AI detections, proximity
 to water bodies/protected areas, activity trend) and always returns the full
-breakdown alongside the score — there is no opaque score with no explanation.
+breakdown alongside the score - there is no opaque score with no explanation.
 
 ## Explicitly out of scope for this build
 
 Native mobile app (the field UI is a responsive web app usable on phones
-instead — see `apps/web/src/app/(app)/field`), live satellite/Sentinel
+instead - see `apps/web/src/app/(app)/field`), live satellite/Sentinel
 imagery, Elasticsearch/OpenSearch (Postgres full-text search is used where
 search exists), real SMS/WhatsApp/email sending, offline conflict resolution
 beyond the `captured_offline`/`synced_at` fields already on `field_reports`,

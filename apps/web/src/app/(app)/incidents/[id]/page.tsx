@@ -78,10 +78,10 @@ export default function IncidentDetailPage() {
               <DetailRow label="Priority" value={incident.priority} />
               <DetailRow label="Water body affected" value={incident.water_body_affected ? "Yes" : "No"} />
               <DetailRow label="Protected area affected" value={incident.protected_area_affected ? "Yes" : "No"} />
-              <DetailRow label="Equipment observed" value={incident.equipment_observed || "—"} />
+              <DetailRow label="Equipment observed" value={incident.equipment_observed || "-"} />
               <DetailRow
                 label="Estimated people present"
-                value={incident.estimated_people_present != null ? String(incident.estimated_people_present) : "—"}
+                value={incident.estimated_people_present != null ? String(incident.estimated_people_present) : "-"}
               />
               <DetailRow label="Verification status" value={incident.verification_status.replaceAll("_", " ")} />
               <DetailRow label="Classification" value={incident.classification} />
@@ -114,7 +114,7 @@ export default function IncidentDetailPage() {
                     </div>
                   ))}
                   <p className="text-[11px] text-slate-400 pt-2">
-                    Operational Risk / Investigation Priority Score — not confirmation of illegal activity. Model{" "}
+                    Operational Risk / Investigation Priority Score - not confirmation of illegal activity. Model{" "}
                     {risk.model_version}, calculated {risk.calculated_at.slice(0, 10)}.
                   </p>
                 </div>
