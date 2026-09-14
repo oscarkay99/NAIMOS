@@ -1,0 +1,34 @@
+name: naimos-intelligence
+
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: naimos-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: naimos
+      POSTGRES_PASSWORD: naimos_dev_password
+      POSTGRES_DB: naimos
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U naimos -d naimos"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: naimos-redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    volumes:
+      - redisdata:/data
+
+volumes:
+  pgdata:
+  redisdata:
