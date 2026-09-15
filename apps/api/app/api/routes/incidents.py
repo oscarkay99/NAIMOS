@@ -22,8 +22,9 @@ from app.schemas.incident import (
 )
 from app.schemas.report import ReportOut
 from app.services.audit import log_action
+from app.services.evidence.aggregator import build_evidence_package
 from app.services.geospatial.queries import district_for_point
-from app.services.reports.generator import generate_preliminary_report
+from app.services.reports.generator import generate_evidence_package_report, generate_preliminary_report
 from app.services.risk.engine import persist_risk_score
 
 router = APIRouter(prefix="/api/incidents", tags=["incidents"])
@@ -264,6 +265,77 @@ def get_incident_preliminary_report(
         select(Report)
         .join(ReportSource, ReportSource.report_id == Report.id)
         .where(ReportSource.incident_id == incident_id, Report.report_type == "preliminary_field_report")
+        .order_by(Report.created_at.desc())
+    ).scalars().first()
+    if report is None:
+        return None
+    return ReportOut(
+        id=report.id, report_type=report.report_type, title=report.title, content_markdown=report.content_markdown,
+        model_name=report.model_name, model_version=report.model_version,
+        source_incident_ids=[s.incident_id for s in report.sources], created_at=report.created_at,
+    )
+
+
+@router.post("/{incident_id}/evidence-package", response_model=ReportOut)
+def generate_evidence_package(
+    incident_id: uuid.UUID,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("ai:analyze_image")),
+) -> ReportOut:
+    """Evidence Intelligence: runs AI object detection across every
+    un-analyzed image attached to this incident, then consolidates results
+    into one operational summary - see services/evidence/aggregator.py for
+    exactly how counts are aggregated (conservative, never summed across
+    files) and services/reports/generator.py for the output format."""
+    incident = db.get(Incident, incident_id)
+    if incident is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Incident not found")
+
+    package = build_evidence_package(db, incident)
+    generated = generate_evidence_package_report(db, incident, package)
+
+    report = Report(
+        report_type="evidence_package",
+        title=generated.title,
+        filters={"incident_id": str(incident_id)},
+        content_markdown=generated.content_markdown,
+        generated_by=user.id,
+        model_name="naimos-evidence-aggregator",
+        model_version="0.1.0-demo",
+    )
+    db.add(report)
+    db.flush()
+    for source_id in generated.source_incident_ids:
+        db.add(ReportSource(report_id=report.id, incident_id=source_id))
+
+    log_action(
+        db, user_id=user.id, action="evidence.package_generated", entity_type="incident", entity_id=str(incident.id),
+        new_value=f"{package.total_evidence_count} evidence file(s), {package.newly_analyzed_count} newly analyzed",
+        ip_address=request.client.host if request.client else None,
+    )
+    db.commit()
+    db.refresh(report)
+
+    return ReportOut(
+        id=report.id, report_type=report.report_type, title=report.title, content_markdown=report.content_markdown,
+        model_name=report.model_name, model_version=report.model_version,
+        source_incident_ids=[s.incident_id for s in report.sources], created_at=report.created_at,
+    )
+
+
+@router.get("/{incident_id}/evidence-package", response_model=ReportOut | None)
+def get_evidence_package(
+    incident_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("ai:analyze_image")),
+) -> ReportOut | None:
+    """Returns the most recently generated Evidence Package for this
+    incident, if any, without generating a new one."""
+    report = db.execute(
+        select(Report)
+        .join(ReportSource, ReportSource.report_id == Report.id)
+        .where(ReportSource.incident_id == incident_id, Report.report_type == "evidence_package")
         .order_by(Report.created_at.desc())
     ).scalars().first()
     if report is None:

@@ -28,6 +28,7 @@ export default function IncidentDetailPage() {
   const [risk, setRisk] = useState<RiskScoreOut | null>(null);
   const [evidence, setEvidence] = useState<EvidenceOut[]>([]);
   const [preliminaryReport, setPreliminaryReport] = useState<ReportOut | null>(null);
+  const [evidencePackage, setEvidencePackage] = useState<ReportOut | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showRiskDetail, setShowRiskDetail] = useState(false);
 
@@ -49,6 +50,14 @@ export default function IncidentDetailPage() {
           setPreliminaryReport(pr);
         } catch {
           setPreliminaryReport(null);
+        }
+      }
+      if (hasPermission("ai:analyze_image")) {
+        try {
+          const pkg = await api.get<ReportOut | null>(`/api/incidents/${params.id}/evidence-package`);
+          setEvidencePackage(pkg);
+        } catch {
+          setEvidencePackage(null);
         }
       }
     } catch (err) {
@@ -135,6 +144,17 @@ export default function IncidentDetailPage() {
           <StatusHistoryPanel incident={incident} />
 
           <EvidencePanel incidentId={incident.id} evidence={evidence} onChange={load} />
+
+          {hasPermission("ai:analyze_image") && (
+            <EvidencePackagePanel
+              incidentId={incident.id}
+              report={evidencePackage}
+              onGenerated={(r) => {
+                setEvidencePackage(r);
+                load(); // package generation may have analyzed previously un-analyzed evidence server-side
+              }}
+            />
+          )}
 
           {hasPermission("report:generate_preliminary") && (
             <PreliminaryReportPanel incidentId={incident.id} report={preliminaryReport} onGenerated={setPreliminaryReport} />
@@ -243,24 +263,30 @@ function EvidencePanel({
 }) {
   const { hasPermission } = useAuth();
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
   const [analyzing, setAnalyzing] = useState<string | null>(null);
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
     setUploading(true);
-    try {
-      const form = new FormData();
-      form.append("incident_id", incidentId);
-      form.append("file", file);
-      await api.postForm(`/api/evidence`, form);
-      onChange();
-    } catch {
-      // surfaced via lack of update; kept simple for demo
-    } finally {
-      setUploading(false);
-      e.target.value = "";
+    setUploadProgress({ done: 0, total: files.length });
+    for (let i = 0; i < files.length; i++) {
+      try {
+        const form = new FormData();
+        form.append("incident_id", incidentId);
+        form.append("file", files[i]);
+        await api.postForm(`/api/evidence`, form);
+      } catch {
+        // continue with remaining files; partial success still shown via onChange()
+      } finally {
+        setUploadProgress({ done: i + 1, total: files.length });
+      }
     }
+    onChange();
+    setUploading(false);
+    setUploadProgress(null);
+    e.target.value = "";
   }
 
   async function handleAnalyze(evidenceId: string) {
@@ -279,8 +305,10 @@ function EvidencePanel({
         <h3 className="text-sm font-semibold text-navy-900">Evidence</h3>
         {hasPermission("evidence:upload") && (
           <label className="text-xs text-navy-700 font-medium cursor-pointer hover:underline">
-            {uploading ? "Uploading…" : "+ Upload evidence"}
-            <input type="file" className="hidden" onChange={handleUpload} disabled={uploading} />
+            {uploading
+              ? `Uploading ${uploadProgress?.done ?? 0}/${uploadProgress?.total ?? 0}…`
+              : "+ Upload evidence (photos, video, documents)"}
+            <input type="file" multiple className="hidden" onChange={handleUpload} disabled={uploading} />
           </label>
         )}
       </div>
@@ -303,7 +331,10 @@ function EvidencePanel({
                 <p className="text-[10px] uppercase tracking-wide text-slate-400">AI Object Detection (observation aid)</p>
                 {ev.ai_analysis.detections.map((d, i) => (
                   <div key={i} className="flex items-center justify-between text-xs">
-                    <span>{d.label}</span>
+                    <span>
+                      {d.label}
+                      {d.count != null && <span className="text-slate-400"> ×{d.count}</span>}
+                    </span>
                     <span className="text-slate-400">{Math.round(d.confidence * 100)}%</span>
                   </div>
                 ))}
@@ -375,6 +406,61 @@ function PreliminaryReportPanel({
         <p className="text-xs text-slate-400">
           Not generated yet - click Generate to assemble a preliminary report from this incident&apos;s recorded
           fields and evidence.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function EvidencePackagePanel({
+  incidentId,
+  report,
+  onGenerated,
+}: {
+  incidentId: string;
+  report: ReportOut | null;
+  onGenerated: (report: ReportOut) => void;
+}) {
+  const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function generate() {
+    setGenerating(true);
+    setError(null);
+    try {
+      const r = await api.post<ReportOut>(`/api/incidents/${incidentId}/evidence-package`);
+      onGenerated(r);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to generate evidence package");
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  return (
+    <div className="bg-surface border border-border rounded-lg p-5">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-semibold text-navy-900">Evidence Package</h3>
+        <button
+          onClick={generate}
+          disabled={generating}
+          className="text-xs text-navy-700 font-medium hover:underline disabled:opacity-50"
+        >
+          {generating ? "Analyzing evidence…" : report ? "Regenerate" : "Generate"}
+        </button>
+      </div>
+      {error && <p className="text-xs text-red-600 mb-2">{error}</p>}
+      {report ? (
+        <>
+          <MarkdownLite content={report.content_markdown} />
+          <p className="text-[11px] text-slate-400 mt-3 pt-3 border-t border-border">
+            Generated {report.created_at.slice(0, 16).replace("T", " ")} by {report.model_name} {report.model_version}
+          </p>
+        </>
+      ) : (
+        <p className="text-xs text-slate-400">
+          Runs AI analysis across every un-analyzed photo attached to this incident and consolidates the results
+          into one summary - originals and their audit trail are never replaced.
         </p>
       )}
     </div>

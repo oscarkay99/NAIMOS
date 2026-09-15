@@ -1,13 +1,18 @@
 import hashlib
 
-from app.services.ai.llm_provider import LLMProvider
+from app.services.ai.llm_provider import ImageDetection, LLMProvider
 
-_SAMPLE_OBJECTS = [
-    ("Excavator", 0.91),
-    ("Exposed soil", 0.88),
-    ("Vegetation clearing", 0.79),
-    ("Water disturbance", 0.64),
-    ("Makeshift structure", 0.55),
+# (label, confidence, is_countable). Countable classes get a deterministic
+# quantity per file; presence-only classes never claim a count.
+_SAMPLE_OBJECTS: list[tuple[str, float, bool]] = [
+    ("Excavator", 0.91, True),
+    ("Active mining pit", 0.86, False),
+    ("Vegetation removal", 0.83, False),
+    ("Exposed soil", 0.88, False),
+    ("Sediment in waterway", 0.71, False),
+    ("Worker", 0.68, True),
+    ("Water disturbance", 0.64, False),
+    ("Makeshift structure", 0.55, False),
 ]
 
 _SAMPLE_TRANSCRIPT = (
@@ -36,9 +41,16 @@ class MockLLMProvider(LLMProvider):
     def transcribe_audio(self, file_path: str) -> str:
         return _SAMPLE_TRANSCRIPT
 
-    def analyze_image(self, file_path: str) -> list[tuple[str, float]]:
-        # Deterministic subset/order based on the file path hash so repeated
-        # uploads of the same demo image return consistent results.
+    def analyze_image(self, file_path: str) -> list[ImageDetection]:
+        # Deterministic subset/order/quantity based on the file path hash so
+        # repeated uploads of the same demo image return consistent results.
         digest = int(hashlib.sha256(file_path.encode()).hexdigest(), 16)
-        count = 2 + (digest % 3)
-        return _SAMPLE_OBJECTS[:count]
+        n = 2 + (digest % 3)
+        results = []
+        for i, (label, confidence, countable) in enumerate(_SAMPLE_OBJECTS[:n]):
+            count = None
+            if countable:
+                # A different slice of the hash per label so quantities vary independently.
+                count = 1 + ((digest >> (i * 4)) % 3)
+            results.append(ImageDetection(label=label, confidence=confidence, count=count))
+        return results

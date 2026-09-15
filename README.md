@@ -38,8 +38,13 @@ subject to human verification. See the full product spec in
   else. The pixel-level analysis is simulated (see AI.md); everything
   downstream of it is real.
 - **Incident lifecycle** - CRUD, status workflow with full audit trail.
-- **Evidence management** - hashed, versioned uploads; originals are never
-  overwritten.
+- **Evidence management** - hashed, versioned bulk uploads (photos, video,
+  documents in one action); originals and their audit trail are never
+  overwritten. **Evidence Package** generation runs AI object detection
+  across every un-analyzed photo on an incident and consolidates results
+  into one operational summary ("3 excavators, 1 active mining pit") with a
+  PHOTO-001-style file index - counts are the maximum seen in any single
+  file, never summed across files, to avoid double-counting.
 - **Field reporting** - a single mobile-friendly capture flow: live in-browser
   voice recording (or file upload) → AI transcript + extracted fields →
   officer review/autofill, GPS capture, photo/video capture, all submitted

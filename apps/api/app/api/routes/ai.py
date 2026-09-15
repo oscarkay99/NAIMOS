@@ -97,7 +97,9 @@ def analyze_image(
     detections = llm.analyze_image(absolute_path)
 
     result = ImageAnalysisOut(
-        detections=[ObjectDetectionResult(label=label, confidence=conf) for label, conf in detections],
+        detections=[
+            ObjectDetectionResult(label=d.label, confidence=d.confidence, count=d.count) for d in detections
+        ],
         model_name=llm.name, model_version=llm.version,
     )
     evidence.ai_analysis = result.model_dump()

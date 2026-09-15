@@ -91,6 +91,25 @@ transparent, inspectable rule (`_recommended_classification()`) based on
 `incident_type` and the existing risk score, not a model guess - and is
 explicitly labeled "requires supervisor confirmation."
 
+## Evidence Intelligence (consolidated evidence packages)
+
+`services/evidence/aggregator.py::build_evidence_package()` runs the mock
+image detector across every un-analyzed photo on an incident, then
+consolidates the per-file results into one summary rather than leaving an
+officer to read 30 separate detection lists. The aggregation rule is
+deliberately conservative: for a countable class (e.g. "Excavator", which
+the mock detector now returns with a `count`), the reported quantity is the
+**maximum** seen in any single file, never a sum across files - summing
+would risk claiming the same excavator was counted twice because it
+appeared in two photos from different angles. Presence-only classes (e.g.
+"Active mining pit") report only how many files detected them, no invented
+count. `services/reports/generator.py::generate_evidence_package_report()`
+formats this into Incident Summary / AI-detected evidence / `PHOTO-001`-style
+Evidence Files sections, with the same "requires verification, not legal
+proof" framing as single-image analysis - and explicitly states that
+original evidence files and their audit trail remain authoritative and are
+never replaced by the summary.
+
 ## Human feedback loop (section 34)
 
 `POST /api/ai/detections/{id}/feedback` lets an authorized user mark an AI

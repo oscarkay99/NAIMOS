@@ -1,7 +1,7 @@
 import httpx
 
 from app.core.config import get_settings
-from app.services.ai.llm_provider import LLMProvider
+from app.services.ai.llm_provider import ImageDetection, LLMProvider
 from app.services.ai.mock_provider import MockLLMProvider
 
 
@@ -37,5 +37,5 @@ class OpenAILLMProvider(LLMProvider):
     def transcribe_audio(self, file_path: str) -> str:
         return self._fallback.transcribe_audio(file_path)
 
-    def analyze_image(self, file_path: str) -> list[tuple[str, float]]:
+    def analyze_image(self, file_path: str) -> list[ImageDetection]:
         return self._fallback.analyze_image(file_path)

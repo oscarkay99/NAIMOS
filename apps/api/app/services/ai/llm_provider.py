@@ -10,9 +10,21 @@ connected) and would need real credentials to test.
 """
 
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from functools import lru_cache
 
 from app.core.config import get_settings
+
+
+@dataclass
+class ImageDetection:
+    label: str
+    confidence: float
+    # Set only for countable object classes (e.g. "Excavator", "Worker") -
+    # None for presence-only classes (e.g. "Exposed soil"), since claiming a
+    # count for something that isn't discretely countable would overstate
+    # what the detector actually knows.
+    count: int | None = None
 
 
 class LLMProvider(ABC):
@@ -26,7 +38,7 @@ class LLMProvider(ABC):
     def transcribe_audio(self, file_path: str) -> str: ...
 
     @abstractmethod
-    def analyze_image(self, file_path: str) -> list[tuple[str, float]]: ...
+    def analyze_image(self, file_path: str) -> list[ImageDetection]: ...
 
 
 @lru_cache

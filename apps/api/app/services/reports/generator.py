@@ -13,6 +13,7 @@ from app.models.enums import IncidentStatus, VerificationStatus
 from app.models.evidence import Evidence
 from app.models.field_report import FieldReport
 from app.models.incident import Incident
+from app.services.evidence.aggregator import EvidencePackageData, build_evidence_package
 from app.services.geospatial.queries import nearest_protected_area, nearest_water_body
 
 REPORT_TITLES = {
@@ -213,6 +214,62 @@ def generate_preliminary_report(db: Session, incident: Incident) -> GeneratedRep
 
     return GeneratedReport(
         title=f"Preliminary Field Report - {incident.reference_number}",
+        content_markdown="\n".join(lines),
+        source_incident_ids=[str(incident.id)],
+    )
+
+
+def generate_evidence_package_report(db: Session, incident: Incident, package: EvidencePackageData) -> GeneratedReport:
+    """Formats an already-computed EvidencePackageData (see
+    services/evidence/aggregator.py) into the same Incident Summary /
+    AI-detected evidence / Evidence files structure the spec's Evidence
+    Intelligence feature describes. Counts are explicitly framed as
+    conservative estimates requiring verification, never as confirmed facts."""
+    lines = [f"# Evidence Package - Incident #{incident.reference_number}", ""]
+    if incident.is_demo:
+        lines.append("DEMO ENVIRONMENT - DATA IS SIMULATED")
+        lines.append("")
+
+    lines.append("## INCIDENT SUMMARY")
+    lines.append(f"- **Incident:** {incident.title}")
+    lines.append(f"- **Type:** {incident.incident_type.value.replace('_', ' ').title()}")
+    lines.append(f"- **Location:** {incident.latitude:.5f}, {incident.longitude:.5f}")
+    lines.append(f"- **Date:** {incident.created_at.strftime('%d %B %Y')}")
+    lines.append(f"- **Evidence files:** {package.total_evidence_count}")
+    lines.append("")
+
+    lines.append("## AI-DETECTED EVIDENCE (requires verification)")
+    if package.consolidated:
+        for d in package.consolidated:
+            if d.max_count is not None:
+                qty = f"{d.max_count} {d.label.lower()}{'s' if d.max_count != 1 else ''}"
+            else:
+                qty = d.label
+            lines.append(
+                f"- {qty} - seen in {d.seen_in_items} file(s), highest confidence {round(d.max_confidence * 100)}%"
+            )
+    else:
+        lines.append("- No AI-analyzable evidence yet (upload photos to enable detection).")
+    lines.append("")
+
+    lines.append("## EVIDENCE FILES")
+    if package.files:
+        for f in package.files:
+            status = f"→ {f.primary_label}" if f.primary_label else "(not yet analyzed - non-image or analysis pending)"
+            lines.append(f"- `{f.index_label}` ({f.original_filename}) {status}")
+    else:
+        lines.append("- No evidence attached yet.")
+    lines.append("")
+
+    lines.append(
+        "*Quantities above are conservative estimates - the maximum count observed in any single file, not a sum "
+        "across files (to avoid double-counting the same object seen from multiple angles). This is an AI "
+        "observation aid, not legal proof; original evidence files and their full audit trail (uploader, hash, "
+        "version history) remain the authoritative record and are never replaced by this summary.*"
+    )
+
+    return GeneratedReport(
+        title=f"Evidence Package - {incident.reference_number}",
         content_markdown="\n".join(lines),
         source_incident_ids=[str(incident.id)],
     )

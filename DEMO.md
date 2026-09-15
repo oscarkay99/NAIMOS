@@ -50,16 +50,23 @@ field reports and AI detections are entirely synthetic.
    appears immediately - location, equipment, environmental proximity,
    evidence, officer statement, and recommended classification, all pulled
    from the record just created.
-9. Log in as `analyst@naimos.gov.gh` or `supervisor@naimos.gov.gh` → open the
-   incident → **Change Status** to `VERIFIED` with a reason (writes to the
-   timeline and audit log).
-10. Log in as `pro@naimos.gov.gh` → **Communications** → generate an
+9. Log in as `admin@naimos.gov.gh` (or any role with both evidence:upload and
+   ai:analyze_image, e.g. SUPER_ADMIN/NATIONAL_ADMIN) → open an incident →
+   **bulk-select several photos** in the Evidence uploader in one action →
+   click **Generate** under **Evidence Package**. Watch it run AI detection
+   across every photo and consolidate the results into one summary ("3
+   excavators - seen in 6 file(s)") with a `PHOTO-001` style file index -
+   never a sum across files, to avoid double-counting.
+10. Log in as `analyst@naimos.gov.gh` or `supervisor@naimos.gov.gh` → open the
+    incident → **Change Status** to `VERIFIED` with a reason (writes to the
+    timeline and audit log).
+11. Log in as `pro@naimos.gov.gh` → **Communications** → generate an
     **Executive Brief** - note the VERIFIED FACTS / AI-GENERATED
     INTERPRETATION / SOURCE RECORDS separation.
-11. **Intelligence Assistant** → ask "Show emerging hotspots" or "Which
+12. **Intelligence Assistant** → ask "Show emerging hotspots" or "Which
     high-risk areas have not been field verified?" and see it answer strictly
     from the database.
-12. **Audit Logs** (as `auditor@naimos.gov.gh`) → see every action from the
+13. **Audit Logs** (as `auditor@naimos.gov.gh`) → see every action from the
     walkthrough recorded, including the satellite scan and risk recalculation.
 
 ## Seeded scenarios (spec section 42)

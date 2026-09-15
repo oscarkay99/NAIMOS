@@ -24,6 +24,7 @@ class EvidenceOut(ORMModel):
 class ObjectDetectionResult(ORMModel):
     label: str
     confidence: float
+    count: int | None = None
 
 
 class ImageAnalysisOut(ORMModel):

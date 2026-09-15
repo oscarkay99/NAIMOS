@@ -139,7 +139,7 @@ export interface EvidenceOut {
   file_size_bytes: number;
   captured_at: string | null;
   description: string | null;
-  ai_analysis: { detections?: { label: string; confidence: number }[] } | null;
+  ai_analysis: { detections?: { label: string; confidence: number; count?: number | null }[] } | null;
   verification_status: VerificationStatus;
   current_version: number;
   created_at: string;
