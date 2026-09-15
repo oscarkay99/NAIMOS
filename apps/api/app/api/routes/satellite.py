@@ -1,6 +1,7 @@
+import math
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from geoalchemy2.shape import from_shape
 from shapely.geometry import Point
 from sqlalchemy import text
@@ -22,7 +23,19 @@ from app.schemas.satellite import (
 from app.services.audit import log_action
 from app.services.geospatial.queries import district_for_point, nearest_protected_area, nearest_water_body
 from app.services.risk.engine import calculate_risk
-from app.services.satellite.provider import get_satellite_provider
+from app.services.satellite.provider import SatelliteProviderError, get_satellite_provider
+
+SIMULATED_DISCLAIMER = (
+    "Change-detection analysis is SIMULATED for this demo (no live satellite "
+    "feed is connected). The area view uses real current satellite imagery; "
+    "the detection itself is an AI-generated signal requiring field "
+    "verification, not confirmation of illegal activity."
+)
+REAL_DISCLAIMER = (
+    "Change-detection analysis uses real Sentinel-2 imagery via Sentinel Hub. "
+    "This is an AI-generated signal requiring field verification, not "
+    "confirmation of illegal activity."
+)
 
 router = APIRouter(prefix="/api/satellite", tags=["satellite"])
 
@@ -74,60 +87,74 @@ def run_scan(
     ).scalar_one()
 
     provider = get_satellite_provider()
-    result = provider.detect_change(lat, lon)
+    try:
+        result = provider.detect_change(lat, lon)
+    except SatelliteProviderError as exc:
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, str(exc)) from exc
 
     previous_obs = _save_observation(db, lat, lon, result.previous_observation)
     current_obs = _save_observation(db, lat, lon, result.current_observation)
 
-    detection = AIDetection(
-        location=from_shape(Point(lon, lat), srid=4326),
-        detection_type=DetectionType(result.detection_type),
-        confidence=result.confidence,
-        estimated_area_hectares=result.estimated_area_hectares,
-        observation_date=result.current_observation.acquisition_date,
-        previous_observation_date=result.previous_observation.acquisition_date,
-        source="satellite_scan",
-        requires_verification=True,
-        review_status=AIReviewStatus.PENDING,
-        model_name=provider.name,
-        model_version="0.1.0-demo",
-    )
-    db.add(detection)
-    db.flush()
+    detection = None
+    if result.change_detected:
+        detection = AIDetection(
+            location=from_shape(Point(lon, lat), srid=4326),
+            detection_type=DetectionType(result.detection_type),
+            confidence=result.confidence,
+            estimated_area_hectares=result.estimated_area_hectares,
+            observation_date=result.current_observation.acquisition_date,
+            previous_observation_date=result.previous_observation.acquisition_date,
+            source="satellite_scan",
+            requires_verification=True,
+            review_status=AIReviewStatus.PENDING,
+            model_name=provider.name,
+            model_version="0.1.0-demo",
+        )
+        db.add(detection)
+        db.flush()
 
     db.add(SatelliteScan(
         location=from_shape(Point(lon, lat), srid=4326),
         previous_observation_id=previous_obs.id,
         current_observation_id=current_obs.id,
-        ai_detection_id=detection.id,
+        ai_detection_id=detection.id if detection else None,
         requested_by=user.id,
         model_name=provider.name,
     ))
 
-    # Real risk computation - now includes the detection just inserted.
+    # Real risk computation either way - proximity/history signals still apply
+    # even when this particular scan found nothing new.
     risk = calculate_risk(db, lat, lon)
     located = district_for_point(db, lat, lon)
     water = nearest_water_body(db, lat, lon)
     protected = nearest_protected_area(db, lat, lon)
 
-    first_detected_days_ago = 0
-    if earliest_existing is not None:
-        first_detected_days_ago = max(
-            (datetime.now(timezone.utc) - earliest_existing.replace(tzinfo=timezone.utc)).days, 0
-        )
+    first_detected_days_ago = None
+    if detection is not None:
+        first_detected_days_ago = 0
+        if earliest_existing is not None:
+            first_detected_days_ago = max(
+                (datetime.now(timezone.utc) - earliest_existing.replace(tzinfo=timezone.utc)).days, 0
+            )
 
     recommended_action = "Field verification" if risk.score >= 41 else "Continue monitoring"
 
     log_action(
-        db, user_id=user.id, action="satellite.scan", entity_type="ai_detection", entity_id=str(detection.id),
-        new_value=f"{result.detection_type} ({result.confidence:.0%}, {result.estimated_area_hectares} ha)",
-        metadata={"latitude": lat, "longitude": lon, "risk_score": risk.score},
+        db, user_id=user.id, action="satellite.scan",
+        entity_type="ai_detection", entity_id=str(detection.id) if detection else None,
+        new_value=(
+            f"{result.detection_type} ({result.confidence:.0%}, {result.estimated_area_hectares} ha)"
+            if result.change_detected else "no significant change detected"
+        ),
+        metadata={"latitude": lat, "longitude": lon, "risk_score": risk.score, "provider": provider.name},
         ip_address=request.client.host if request.client else None,
     )
     db.commit()
 
     return SatelliteScanResult(
-        ai_detection_id=detection.id,
+        change_detected=result.change_detected,
+        is_simulated=result.current_observation.is_simulated,
+        ai_detection_id=detection.id if detection else None,
         latitude=lat,
         longitude=lon,
         region=located["region_name"] if located else None,
@@ -157,7 +184,16 @@ def run_scan(
         ),
         model_name=provider.name,
         model_version="0.1.0-demo",
+        disclaimer=SIMULATED_DISCLAIMER if result.current_observation.is_simulated else REAL_DISCLAIMER,
     )
+
+
+@router.get("/status")
+def satellite_status(
+    user: User = Depends(require_permission("satellite:scan")),
+) -> dict:
+    provider = get_satellite_provider()
+    return {"provider_name": provider.name, "is_simulated": provider.is_simulated}
 
 
 @router.get("/history", response_model=list[SatelliteHistoryEntry])
@@ -181,4 +217,15 @@ def scan_history(
         ),
         {"lat": lat, "lon": lon, "radius_m": radius_km * 1000},
     ).mappings().all()
-    return [dict(r) for r in rows]
+    return [_sanitize_nan(dict(r)) for r in rows]
+
+
+def _sanitize_nan(row: dict) -> dict:
+    """Defense in depth: a NaN float would otherwise crash JSON
+    serialization for the whole response rather than just this one row -
+    normalize any stray NaN (legacy bad data, a future provider bug) to
+    None so a single corrupted record can't take the endpoint down."""
+    for key, value in row.items():
+        if isinstance(value, float) and math.isnan(value):
+            row[key] = None
+    return row

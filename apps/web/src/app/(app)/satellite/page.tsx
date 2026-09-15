@@ -18,9 +18,14 @@ export default function SatelliteMonitoringPage() {
   const [result, setResult] = useState<SatelliteScanResult | null>(null);
   const [history, setHistory] = useState<SatelliteHistoryEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [providerStatus, setProviderStatus] = useState<{ provider_name: string; is_simulated: boolean } | null>(null);
 
   useEffect(() => {
     api.get<Incident[]>("/api/incidents?limit=50").then(setIncidents).catch(() => {});
+    api
+      .get<{ provider_name: string; is_simulated: boolean }>("/api/satellite/status")
+      .then(setProviderStatus)
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -62,7 +67,7 @@ export default function SatelliteMonitoringPage() {
   const historyFeatures: MapFeature[] = history.map((h) => ({
     id: h.id,
     layer: "ai_detection",
-    name: `${h.detection_type.replaceAll("_", " ")} (${Math.round(h.confidence * 100)}%)`,
+    name: `${h.detection_type.replaceAll("_", " ")} (${h.confidence != null ? Math.round(h.confidence * 100) + "%" : "n/a"})`,
     latitude: h.latitude,
     longitude: h.longitude,
     status: h.review_status,
@@ -76,12 +81,38 @@ export default function SatelliteMonitoringPage() {
       <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2 space-y-4">
           <div className="bg-navy-950 text-white rounded-lg p-4 text-xs leading-relaxed">
-            <strong>How this works:</strong> the imagery below is a real, live satellite view of this location
-            (Esri World Imagery, current pass only - no historical archive). Running a scan simulates an AI
-            change-detection pass comparing a baseline and latest observation and writes a real detection record
-            that flows through the same risk engine, map, and audit log as any other AI signal. Connecting a real
-            time-series provider (Sentinel Hub / Google Earth Engine) would replace only the simulated comparison
-            step below - everything downstream already works as shown.
+            <div className="flex items-center gap-2 mb-1.5">
+              <strong>How this works</strong>
+              {providerStatus && (
+                <span
+                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                    providerStatus.is_simulated
+                      ? "bg-purple-500/20 text-purple-200 border border-purple-400/40"
+                      : "bg-emerald-500/20 text-emerald-200 border border-emerald-400/40"
+                  }`}
+                >
+                  {providerStatus.is_simulated ? "SIMULATED PROVIDER" : "LIVE SENTINEL-2 VIA SENTINEL HUB"}
+                </span>
+              )}
+            </div>
+            {providerStatus?.is_simulated === false ? (
+              <>
+                Running a scan queries real Sentinel-2 imagery via Sentinel Hub and compares NDVI (vegetation
+                index) between a baseline window and the latest available window for this AOI. A significant
+                drop is written as a real detection record that flows through the same risk engine, map, and
+                audit log as any other AI signal. Analysis can take a few seconds and may report &ldquo;no significant
+                change&rdquo; or fail if the area is too cloud-covered in the analysis windows.
+              </>
+            ) : (
+              <>
+                The imagery below is a real, live satellite view of this location (Esri World Imagery, current
+                pass only - no historical archive). Running a scan simulates an AI change-detection pass
+                comparing a baseline and latest observation and writes a real detection record that flows
+                through the same risk engine, map, and audit log as any other AI signal. Connecting a real
+                time-series provider (Sentinel Hub) would replace only the simulated comparison step below -
+                everything downstream already works as shown.
+              </>
+            )}
           </div>
 
           <div className="bg-surface border border-border rounded-lg p-4">
@@ -145,7 +176,7 @@ export default function SatelliteMonitoringPage() {
                       <p className="text-slate-400">{h.observation_date.slice(0, 10)} · {h.estimated_area_hectares} ha</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold">{Math.round(h.confidence * 100)}%</p>
+                      <p className="font-semibold">{h.confidence != null ? `${Math.round(h.confidence * 100)}%` : "n/a"}</p>
                       <p className="text-slate-400">{h.review_status}</p>
                     </div>
                   </div>
@@ -170,14 +201,29 @@ export default function SatelliteMonitoringPage() {
 }
 
 function DetectedCard({ result }: { result: SatelliteScanResult }) {
-  const isElevated = result.risk_score >= 41;
+  const isElevated = result.change_detected && result.risk_score >= 41;
   return (
     <div className={`rounded-lg border p-5 space-y-4 ${isElevated ? "border-risk-high bg-red-50" : "border-border bg-surface"}`}>
-      <div>
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-risk-high">
-          {isElevated ? "HIGH-RISK AREA DETECTED" : "Area scanned - low signal"}
-        </p>
-        <p className="text-xs text-slate-500 mt-1">AI-generated · requires field verification</p>
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className={`text-[11px] font-semibold uppercase tracking-wide ${isElevated ? "text-risk-high" : "text-slate-500"}`}>
+            {!result.change_detected
+              ? "No significant change detected"
+              : isElevated
+                ? "HIGH-RISK AREA DETECTED"
+                : "Area scanned - low signal"}
+          </p>
+          <p className="text-xs text-slate-500 mt-1">
+            {result.change_detected ? "AI-generated · requires field verification" : "Imagery analyzed, nothing crossed threshold"}
+          </p>
+        </div>
+        <span
+          className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+            result.is_simulated ? "bg-purple-50 text-purple-700 border border-purple-200" : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+          }`}
+        >
+          {result.is_simulated ? "SIMULATED" : "LIVE SENTINEL-2"}
+        </span>
       </div>
 
       <div className="flex items-center gap-2">
@@ -187,12 +233,16 @@ function DetectedCard({ result }: { result: SatelliteScanResult }) {
       <dl className="text-xs space-y-2">
         <Row label="Location" value={[result.district, result.region].filter(Boolean).join(", ") || "Unknown"} />
         <Row label="Coordinates" value={`${result.latitude.toFixed(4)}, ${result.longitude.toFixed(4)}`} />
-        <Row label="Detected change" value={`${result.detection_type.replaceAll("_", " ")} · ${result.estimated_area_hectares} ha`} />
-        <Row label="Confidence" value={`${Math.round(result.confidence * 100)}%`} />
-        <Row
-          label="First detected"
-          value={result.first_detected_days_ago === 0 ? "Just now (first pass)" : `${result.first_detected_days_ago} days ago`}
-        />
+        {result.change_detected && (
+          <>
+            <Row label="Detected change" value={`${result.detection_type!.replaceAll("_", " ")} · ${result.estimated_area_hectares} ha`} />
+            <Row label="Confidence" value={`${Math.round((result.confidence ?? 0) * 100)}%`} />
+            <Row
+              label="First detected"
+              value={result.first_detected_days_ago === 0 ? "Just now (first pass)" : `${result.first_detected_days_ago} days ago`}
+            />
+          </>
+        )}
         <Row
           label="River proximity"
           value={result.nearest_water_body ? `${result.nearest_water_body.name} · ${result.nearest_water_body.distance_km} km` : "None nearby"}
@@ -219,12 +269,14 @@ function DetectedCard({ result }: { result: SatelliteScanResult }) {
 
       <p className="text-[10px] text-slate-400">{result.disclaimer}</p>
 
-      <Link
-        href={`/field?lat=${result.latitude}&lon=${result.longitude}`}
-        className="block text-center rounded-md bg-navy-800 text-white text-xs font-medium py-2 hover:bg-navy-700"
-      >
-        Open Field Reporting for this location →
-      </Link>
+      {result.change_detected && (
+        <Link
+          href={`/field?lat=${result.latitude}&lon=${result.longitude}`}
+          className="block text-center rounded-md bg-navy-800 text-white text-xs font-medium py-2 hover:bg-navy-700"
+        >
+          Open Field Reporting for this location →
+        </Link>
+      )}
     </div>
   );
 }

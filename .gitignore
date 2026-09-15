@@ -30,6 +30,7 @@ apps/api/uploads/
 .vscode/
 .idea/
 .DS_Store
+.claude/
 
 # Logs
 *.log

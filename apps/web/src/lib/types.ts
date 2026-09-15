@@ -242,17 +242,19 @@ export interface NearbyFeatureOut {
 }
 
 export interface SatelliteScanResult {
-  ai_detection_id: string;
+  change_detected: boolean;
+  is_simulated: boolean;
+  ai_detection_id: string | null;
   latitude: number;
   longitude: number;
   region: string | null;
   district: string | null;
   risk_score: number;
   risk_category: RiskCategory;
-  detection_type: string;
-  confidence: number;
-  estimated_area_hectares: number;
-  first_detected_days_ago: number;
+  detection_type: string | null;
+  confidence: number | null;
+  estimated_area_hectares: number | null;
+  first_detected_days_ago: number | null;
   nearest_water_body: NearbyFeatureOut | null;
   nearest_protected_area: NearbyFeatureOut | null;
   recommended_action: string;
@@ -267,7 +269,7 @@ export interface SatelliteScanResult {
 export interface SatelliteHistoryEntry {
   id: string;
   detection_type: string;
-  confidence: number;
+  confidence: number | null;
   estimated_area_hectares: number | null;
   observation_date: string;
   review_status: string;

@@ -19,6 +19,9 @@ Copy `.env.example` to `.env` at the repo root (the API reads it via
 | `OPENAI_BASE_URL` | `https://api.openai.com/v1` | Any OpenAI-compatible endpoint |
 | `OPENAI_MODEL` | `gpt-4o-mini` | |
 | `MAPBOX_TOKEN` | empty | Unused - the web app uses token-free MapLibre tiles |
+| `SENTINELHUB_CLIENT_ID` / `SENTINELHUB_CLIENT_SECRET` | empty | Leave both empty for the built-in mock satellite provider; set both (OAuth Client Credentials from Dashboards > Sentinel Hub > User settings > OAuth clients) to activate real Sentinel-2 change detection |
+| `SENTINELHUB_TOKEN_URL` | CDSE's OAuth endpoint | Override only if using commercial services.sentinel-hub.com instead of the free Copernicus Data Space Ecosystem |
+| `SENTINELHUB_STATISTICS_URL` | CDSE's Statistical API endpoint | Same override note as above |
 | `STORAGE_PROVIDER` | `local` | `local` \| `s3` (S3 not implemented yet) |
 | `STORAGE_BUCKET` | `naimos-evidence` | Used if/when an S3 provider is added |
 | `STORAGE_LOCAL_PATH` | `./apps/api/storage` | Where evidence files are written locally |

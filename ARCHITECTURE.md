@@ -48,17 +48,31 @@ later without touching call sites:
   built and tested against real credentials.
 - **`StorageProvider`** (`services/storage/local_storage.py`) - local
   filesystem today; swap for an S3-compatible client via `STORAGE_PROVIDER`.
-- **`SatelliteProvider`** (`services/satellite/provider.py`) - `MockSatelliteProvider`
-  simulates a before/after Sentinel-2-style change-detection pass (deterministic
-  per AOI per day) and is wired into a real, working pipeline: the AOI view in
-  the Satellite Monitoring page renders actual current satellite imagery (Esri
+- **`SatelliteProvider`** (`services/satellite/provider.py`) - two implementations:
+  `MockSatelliteProvider` (default, no credentials) simulates a before/after
+  Sentinel-2-style change-detection pass, deterministic per AOI per day.
+  `SentinelHubProvider` (`services/satellite/sentinelhub_provider.py`,
+  active once `SENTINELHUB_CLIENT_ID`/`SENTINELHUB_CLIENT_SECRET` are set -
+  defaults target the free Copernicus Data Space Ecosystem deployment, see
+  `ENVIRONMENT.md`) is a real detector, verified end-to-end against live
+  Sentinel-2 data: it queries the Statistical API for mean NDVI over a
+  ~1.1km AOI in a baseline window and a current window, and flags a
+  significant drop as vegetation loss / exposed soil / excavation depending
+  on magnitude - a standard, well-established remote-sensing technique that
+  needs no training data or hosted model. It can genuinely report "no
+  significant change" rather than always producing a finding. Two things
+  learned by testing against the real API and baked into the implementation:
+  windows are ~4 months wide, not the ~6 weeks originally assumed, because a
+  small AOI in tropical West Africa's rainy season can otherwise have zero
+  cloud-free Sentinel-2 passes; and the query explicitly requests
+  `mosaickingOrder: leastCC`, since without it the API defaults to the most
+  recent scene regardless of cloud cover. Either way, the AOI view in the
+  Satellite Monitoring page renders actual current satellite imagery (Esri
   World Imagery, no key required); running a scan persists real
   `satellite_observations` + `ai_detections` rows through the normal
   application code path, which the existing risk engine, map, and audit log
-  all react to exactly as they would to a real detector's output. Only the
-  pixel-level change analysis itself is simulated - swapping in a real
-  provider (Sentinel Hub / Google Earth Engine, needs credentials) means
-  implementing this same interface; nothing downstream changes.
+  all react to identically regardless of which provider
+  produced them.
 - **Notifications** - the `notifications` table models channel + event type;
   no email/SMS/WhatsApp sender is wired up (nothing to fake without real
   credentials).
@@ -83,9 +97,10 @@ breakdown alongside the score - there is no opaque score with no explanation.
 ## Explicitly out of scope for this build
 
 Native mobile app (the field UI is a responsive web app usable on phones
-instead - see `apps/web/src/app/(app)/field`), a real time-series satellite
-feed (Satellite Monitoring uses real current imagery + a simulated
-change-detection pass - see the `SatelliteProvider` note above),
+instead - see `apps/web/src/app/(app)/field`), a hosted/trained ML change
+classifier (the real `SentinelHubProvider` uses index-thresholding, not a
+trained model - see the `SatelliteProvider` note above), a scheduled
+ingestion job that scans AOIs automatically rather than on-demand,
 Elasticsearch/OpenSearch (Postgres full-text search is used where
 search exists), real SMS/WhatsApp/email sending, offline conflict resolution
 beyond the `captured_offline`/`synced_at` fields already on `field_reports`,

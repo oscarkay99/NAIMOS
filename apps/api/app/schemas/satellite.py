@@ -26,11 +26,16 @@ class NearbyFeatureOut(ORMModel):
 
 class SatelliteScanResult(ORMModel):
     """The 'HIGH-RISK AREA DETECTED' card. Every figure here is computed by
-    the real risk engine and geospatial queries against the newly-persisted
-    ai_detections row - only the underlying imagery/change signal itself is
-    simulated (see `disclaimer`)."""
+    the real risk engine and geospatial queries - only the underlying
+    imagery/change signal itself may be simulated (see `disclaimer`,
+    `is_simulated`). `change_detected=False` means real imagery was analyzed
+    and nothing crossed the significance threshold - no ai_detections row is
+    created in that case."""
 
-    ai_detection_id: uuid.UUID
+    change_detected: bool
+    is_simulated: bool
+
+    ai_detection_id: uuid.UUID | None
     latitude: float
     longitude: float
     region: str | None
@@ -39,10 +44,10 @@ class SatelliteScanResult(ORMModel):
     risk_score: int
     risk_category: str
 
-    detection_type: str
-    confidence: float
-    estimated_area_hectares: float
-    first_detected_days_ago: int
+    detection_type: str | None
+    confidence: float | None
+    estimated_area_hectares: float | None
+    first_detected_days_ago: int | None
 
     nearest_water_body: NearbyFeatureOut | None
     nearest_protected_area: NearbyFeatureOut | None
@@ -54,18 +59,13 @@ class SatelliteScanResult(ORMModel):
     model_name: str
     model_version: str
     requires_verification: bool = True
-    disclaimer: str = (
-        "Change-detection analysis is SIMULATED for this demo (no live satellite "
-        "feed is connected). The area view uses real current satellite imagery; "
-        "the detection itself is an AI-generated signal requiring field "
-        "verification, not confirmation of illegal activity."
-    )
+    disclaimer: str
 
 
 class SatelliteHistoryEntry(ORMModel):
     id: uuid.UUID
     detection_type: str
-    confidence: float
+    confidence: float | None
     estimated_area_hectares: float | None
     observation_date: datetime
     review_status: str

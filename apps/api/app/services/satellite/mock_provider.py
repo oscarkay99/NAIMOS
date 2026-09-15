@@ -1,7 +1,7 @@
 import random
 from datetime import datetime, timedelta, timezone
 
-from app.services.satellite.provider import ChangeDetectionResult, ObservationResult, SatelliteProvider
+from app.services.satellite.provider import ChangeDetectionOutcome, ObservationResult, SatelliteProvider
 
 _DETECTION_WEIGHTS = [
     ("EXCAVATION", 3),
@@ -23,8 +23,9 @@ class MockSatelliteProvider(SatelliteProvider):
     """
 
     name = "mock-satellite-change-detector"
+    is_simulated = True
 
-    def detect_change(self, lat: float, lon: float) -> ChangeDetectionResult:
+    def detect_change(self, lat: float, lon: float) -> ChangeDetectionOutcome:
         today = datetime.now(timezone.utc).date().isoformat()
         seed = f"{round(lat, 3)}:{round(lon, 3)}:{today}"
         rng = random.Random(seed)
@@ -50,10 +51,11 @@ class MockSatelliteProvider(SatelliteProvider):
             is_simulated=True,
         )
 
-        return ChangeDetectionResult(
+        return ChangeDetectionOutcome(
+            previous_observation=previous,
+            current_observation=current,
+            change_detected=True,
             detection_type=detection_type,
             confidence=confidence,
             estimated_area_hectares=area_hectares,
-            previous_observation=previous,
-            current_observation=current,
         )
