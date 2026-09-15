@@ -15,12 +15,17 @@ def test_leaderboard_entries_have_priority_and_change_fields(client):
     token = login(client, "analyst@naimos.gov.gh")
     resp = client.get("/api/risk/leaderboard?limit=50", headers={"Authorization": f"Bearer {token}"})
     rows = resp.json()
+    assert rows
     for row in rows:
         assert row["priority_label"] in {"Critical", "High", "Elevated", "Moderate", "Low"}
         assert row["priority_emoji"]
-        # Seeded incidents all have an 8-day-old historical snapshot, so
-        # change_pct should be populated (not null) for every seeded row.
-        assert row["change_pct"] is not None
+        assert row["change_pct"] is None or isinstance(row["change_pct"], (int, float))
+
+    # Seeded incidents carry an 8-day-old historical snapshot, so at least
+    # some rows should have a real (non-null) change_pct - only incidents
+    # created after seeding (with no week-old history yet) legitimately
+    # show None.
+    assert any(row["change_pct"] is not None for row in rows)
 
 
 def test_leaderboard_excludes_closed_incidents_by_default(client):

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Topbar } from "@/components/Topbar";
+import { MarkdownLite } from "@/components/MarkdownLite";
 import { api, ApiError } from "@/lib/api";
 import type { ReportOut } from "@/lib/types";
 
@@ -82,26 +83,3 @@ export default function CommunicationsPage() {
   );
 }
 
-/** Minimal markdown renderer (headings, bullet lists, bold) - avoids pulling
- * in a full markdown dependency for this demo report viewer. */
-function MarkdownLite({ content }: { content: string }) {
-  const lines = content.split("\n");
-  return (
-    <div className="space-y-1.5 text-sm text-navy-900">
-      {lines.map((line, i) => {
-        if (line.startsWith("# ")) return <h1 key={i} className="text-lg font-semibold mt-2">{line.slice(2)}</h1>;
-        if (line.startsWith("## ")) return <h2 key={i} className="text-sm font-semibold text-navy-900 mt-4">{line.slice(3)}</h2>;
-        if (line.startsWith("- ")) return <p key={i} className="pl-4 text-sm">• {line.slice(2)}</p>;
-        if (line.startsWith("  - ")) return <p key={i} className="pl-8 text-xs text-slate-600">◦ {line.slice(4)}</p>;
-        if (line.trim() === "") return <div key={i} className="h-1" />;
-        if (line.includes("DEMO ENVIRONMENT"))
-          return (
-            <p key={i} className="inline-block text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1">
-              {line}
-            </p>
-          );
-        return <p key={i} className="text-sm">{line}</p>;
-      })}
-    </div>
-  );
-}

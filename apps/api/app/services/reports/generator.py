@@ -10,7 +10,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.enums import IncidentStatus, VerificationStatus
+from app.models.evidence import Evidence
+from app.models.field_report import FieldReport
 from app.models.incident import Incident
+from app.services.geospatial.queries import nearest_protected_area, nearest_water_body
 
 REPORT_TITLES = {
     "executive_brief": "Executive Brief",
@@ -108,4 +111,108 @@ def generate_report(
         title=REPORT_TITLES.get(report_type, "Report"),
         content_markdown="\n".join(lines),
         source_incident_ids=[str(i.id) for i in incidents],
+    )
+
+
+def _recommended_classification(incident: Incident) -> str:
+    """A simple, transparent rule - not an LLM guess - so the recommendation
+    is always traceable to the same fields shown elsewhere on the record."""
+    score = incident.risk_score or 0
+    if score >= 61:
+        urgency = "Priority field verification recommended"
+    elif score >= 41:
+        urgency = "Field verification recommended"
+    else:
+        urgency = "Continue monitoring; verify as resources allow"
+
+    type_label = incident.incident_type.value.replace("_", " ").title()
+    return f"{type_label} - {urgency} (AI-suggested classification, requires supervisor confirmation)"
+
+
+def generate_preliminary_report(db: Session, incident: Incident) -> GeneratedReport:
+    """The 'AI writes the preliminary report' feature for a single field
+    incident: assembles everything already on record (location, equipment,
+    environmental impact, evidence, officer statement) into one structured
+    document. Every fact comes straight from the database - the only
+    AI-authored parts are the recommended classification (a transparent
+    rule, see above) and, if present, the voice-to-report transcript, which
+    is itself officer-reviewed and approved before it ever reaches here."""
+    water = nearest_water_body(db, incident.latitude, incident.longitude)
+    protected = nearest_protected_area(db, incident.latitude, incident.longitude)
+
+    evidence_items = list(
+        db.execute(select(Evidence).where(Evidence.incident_id == incident.id).order_by(Evidence.created_at)).scalars().all()
+    )
+    field_report = db.execute(
+        select(FieldReport)
+        .where(FieldReport.incident_id == incident.id, FieldReport.officer_approved.is_(True))
+        .order_by(FieldReport.created_at.desc())
+    ).scalars().first()
+
+    lines = [f"# Incident #{incident.reference_number} - Preliminary Field Report", ""]
+    if incident.is_demo:
+        lines.append("DEMO ENVIRONMENT - DATA IS SIMULATED")
+        lines.append("")
+
+    lines.append("## OFFICER-REPORTED FACTS")
+    lines.append(f"- **Title:** {incident.title}")
+    lines.append(f"- **Location:** {incident.latitude:.5f}, {incident.longitude:.5f}")
+    lines.append(f"- **Date/time reported:** {incident.created_at.strftime('%Y-%m-%d %H:%M UTC')}")
+    lines.append(f"- **Incident type:** {incident.incident_type.value.replace('_', ' ').title()}")
+    lines.append(f"- **Equipment observed:** {incident.equipment_observed or 'Not recorded'}")
+    lines.append(
+        f"- **Estimated number of persons present:** "
+        f"{incident.estimated_people_present if incident.estimated_people_present is not None else 'Not recorded'}"
+    )
+    lines.append(f"- **Environmental impact noted:** {incident.environmental_impact or 'Not recorded'}")
+    lines.append("")
+
+    lines.append("## ENVIRONMENTAL PROXIMITY (AI-computed from GPS coordinates)")
+    if water:
+        dist_km = round(water["distance_m"] / 1000, 2)
+        lines.append(f"- River/water body affected: {'Yes' if incident.water_body_affected else 'No'} - nearest is {water['name']}, {dist_km} km away")
+    else:
+        lines.append(f"- River/water body affected: {'Yes' if incident.water_body_affected else 'No'}")
+    if protected:
+        dist_km = round(protected["distance_m"] / 1000, 2)
+        lines.append(f"- Forest/protected area affected: {'Yes' if incident.protected_area_affected else 'No'} - nearest is {protected['name']}, {dist_km} km away")
+    else:
+        lines.append(f"- Forest/protected area affected: {'Yes' if incident.protected_area_affected else 'No'}")
+    lines.append("")
+
+    lines.append("## EVIDENCE")
+    if evidence_items:
+        for ev in evidence_items:
+            ai_note = ""
+            if ev.ai_analysis and ev.ai_analysis.get("detections"):
+                labels = ", ".join(f"{d['label']} ({round(d['confidence']*100)}%)" for d in ev.ai_analysis["detections"])
+                ai_note = f" - AI-assisted observation: {labels} (not legal proof, requires verification)"
+            lines.append(f"- {ev.file_type.value.title()}: `{ev.original_filename}`{ai_note}")
+    else:
+        lines.append("- No evidence attached yet.")
+    lines.append("")
+
+    lines.append("## OFFICER STATEMENT")
+    if field_report and field_report.narrative:
+        lines.append(f"> {field_report.narrative}")
+        lines.append("")
+        lines.append("*(Voice-recorded statement, transcribed by AI and reviewed/approved by the reporting officer.)*")
+    elif incident.description:
+        lines.append(f"> {incident.description}")
+    else:
+        lines.append("No officer narrative recorded.")
+    lines.append("")
+
+    lines.append("## RECOMMENDED CLASSIFICATION")
+    lines.append(f"- {_recommended_classification(incident)}")
+    lines.append("")
+    lines.append(
+        "*This preliminary report is AI-assembled from verified field-officer input and database records. "
+        "It is not a confirmation of illegal activity and requires supervisor/analyst review before action.*"
+    )
+
+    return GeneratedReport(
+        title=f"Preliminary Field Report - {incident.reference_number}",
+        content_markdown="\n".join(lines),
+        source_incident_ids=[str(incident.id)],
     )

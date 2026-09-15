@@ -42,9 +42,14 @@ field reports and AI detections are entirely synthetic.
    AI Change Detection Scan**. See the live "HIGH-RISK AREA DETECTED" card
    computed by the real risk engine, then click through to pre-fill a new
    field incident from the detected coordinates.
-8. Log in as `officer@naimos.gov.gh` → **Field Reporting** → submit a new
-   incident, or use **Voice-to-Report**: upload any audio file, review the
-   AI-drafted transcript + structured extraction, and approve it.
+8. Log in as `officer@naimos.gov.gh` → **Field Reporting** → click **"Record
+   voice narrative"** and speak a report (e.g. "We arrived at the location
+   and found two excavators operating close to the river"), **Transcribe**,
+   review the AI draft, **"Use as officer statement & autofill fields"**, add
+   a photo, then **Submit**. The AI-generated Preliminary Field Report
+   appears immediately - location, equipment, environmental proximity,
+   evidence, officer statement, and recommended classification, all pulled
+   from the record just created.
 9. Log in as `analyst@naimos.gov.gh` or `supervisor@naimos.gov.gh` → open the
    incident → **Change Status** to `VERIFIED` with a reason (writes to the
    timeline and audit log).

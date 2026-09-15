@@ -6,9 +6,10 @@ import { Topbar } from "@/components/Topbar";
 import { StatusBadge } from "@/components/StatusBadge";
 import { RiskBadge } from "@/components/RiskBadge";
 import { LoadingState, ErrorState } from "@/components/States";
+import { MarkdownLite } from "@/components/MarkdownLite";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import type { EvidenceOut, IncidentDetail, IncidentStatus, RiskScoreOut } from "@/lib/types";
+import type { EvidenceOut, IncidentDetail, IncidentStatus, ReportOut, RiskScoreOut } from "@/lib/types";
 
 const STATUS_OPTIONS: IncidentStatus[] = [
   "NEW",
@@ -26,6 +27,7 @@ export default function IncidentDetailPage() {
   const [incident, setIncident] = useState<IncidentDetail | null>(null);
   const [risk, setRisk] = useState<RiskScoreOut | null>(null);
   const [evidence, setEvidence] = useState<EvidenceOut[]>([]);
+  const [preliminaryReport, setPreliminaryReport] = useState<ReportOut | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showRiskDetail, setShowRiskDetail] = useState(false);
 
@@ -41,10 +43,18 @@ export default function IncidentDetailPage() {
       } catch {
         setRisk(null);
       }
+      if (hasPermission("report:generate_preliminary")) {
+        try {
+          const pr = await api.get<ReportOut | null>(`/api/incidents/${params.id}/preliminary-report`);
+          setPreliminaryReport(pr);
+        } catch {
+          setPreliminaryReport(null);
+        }
+      }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to load incident");
     }
-  }, [params.id]);
+  }, [params.id, hasPermission]);
 
   useEffect(() => {
     load();
@@ -125,6 +135,10 @@ export default function IncidentDetailPage() {
           <StatusHistoryPanel incident={incident} />
 
           <EvidencePanel incidentId={incident.id} evidence={evidence} onChange={load} />
+
+          {hasPermission("report:generate_preliminary") && (
+            <PreliminaryReportPanel incidentId={incident.id} report={preliminaryReport} onGenerated={setPreliminaryReport} />
+          )}
         </div>
 
         <div className="space-y-5">
@@ -308,6 +322,61 @@ function EvidencePanel({
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+function PreliminaryReportPanel({
+  incidentId,
+  report,
+  onGenerated,
+}: {
+  incidentId: string;
+  report: ReportOut | null;
+  onGenerated: (report: ReportOut) => void;
+}) {
+  const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function generate() {
+    setGenerating(true);
+    setError(null);
+    try {
+      const r = await api.post<ReportOut>(`/api/incidents/${incidentId}/preliminary-report`);
+      onGenerated(r);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to generate preliminary report");
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  return (
+    <div className="bg-surface border border-border rounded-lg p-5">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-semibold text-navy-900">AI-Generated Preliminary Report</h3>
+        <button
+          onClick={generate}
+          disabled={generating}
+          className="text-xs text-navy-700 font-medium hover:underline disabled:opacity-50"
+        >
+          {generating ? "Generating…" : report ? "Regenerate" : "Generate"}
+        </button>
+      </div>
+      {error && <p className="text-xs text-red-600 mb-2">{error}</p>}
+      {report ? (
+        <>
+          <MarkdownLite content={report.content_markdown} />
+          <p className="text-[11px] text-slate-400 mt-3 pt-3 border-t border-border">
+            Generated {report.created_at.slice(0, 16).replace("T", " ")} by {report.model_name} {report.model_version}
+          </p>
+        </>
+      ) : (
+        <p className="text-xs text-slate-400">
+          Not generated yet - click Generate to assemble a preliminary report from this incident&apos;s recorded
+          fields and evidence.
+        </p>
+      )}
     </div>
   );
 }

@@ -37,6 +37,7 @@ class VoiceReportApprove(BaseModel):
     field_report_id: uuid.UUID
     edited_transcript: str | None = None
     edited_extraction: VoiceExtraction | None = None
+    incident_id: uuid.UUID | None = None
 
 
 class FieldReportOut(ORMModel):

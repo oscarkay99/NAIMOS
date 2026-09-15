@@ -115,9 +115,15 @@ def approve_voice_report(
         report.narrative = payload.edited_transcript
     else:
         report.narrative = report.transcript
+    # report.transcript is left untouched - it's the original AI transcript
+    # of the recording and is never overwritten (section 10); narrative is
+    # the officer-approved version the rest of the app reads from.
 
     if payload.edited_extraction is not None:
         report.ai_extraction = payload.edited_extraction.model_dump()
+
+    if payload.incident_id is not None:
+        report.incident_id = payload.incident_id
 
     report.officer_approved = True
     report.officer_approved_at = datetime.now(timezone.utc)

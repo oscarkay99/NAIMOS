@@ -40,8 +40,13 @@ subject to human verification. See the full product spec in
 - **Incident lifecycle** - CRUD, status workflow with full audit trail.
 - **Evidence management** - hashed, versioned uploads; originals are never
   overwritten.
-- **Field reporting** - responsive (phone-usable) incident form, plus a
-  voice-to-report flow (transcribe → structured draft → officer review/approve).
+- **Field reporting** - a single mobile-friendly capture flow: live in-browser
+  voice recording (or file upload) → AI transcript + extracted fields →
+  officer review/autofill, GPS capture, photo/video capture, all submitted
+  together. Automatically generates an AI-assembled Preliminary Field Report
+  (location, equipment, environmental proximity, evidence, officer statement,
+  recommended classification) from the real incident record - also available
+  on-demand from any incident's detail page.
 - **AI assistant** - natural language → allowlisted, parametrized queries only
   (never free-form AI-generated SQL) against a read-only DB role.
 - **PRO Communications Centre** - report/briefing generator built only from

@@ -75,6 +75,22 @@ near water bodies, region summaries, incidents open >N days, today's
 briefing). There is no code path that lets an LLM produce SQL that gets
 executed. Every query is logged to `ai_queries` and to `audit_logs`.
 
+## Preliminary field report generation
+
+`services/reports/generator.py::generate_preliminary_report()` assembles a
+per-incident report (Location, Date/time, Equipment, Environmental impact,
+River/forest proximity, Evidence, Officer statement, Recommended
+classification) - the field officer's counterpart to the PRO/analyst report
+generator above. Almost every line is a direct field read or a real
+geospatial query (nearest water body/protected area) - there is no LLM call
+in the generation path. Two things are explicitly AI-touched and labeled as
+such: the **officer statement**, which is the voice-to-report transcript
+only after the officer has reviewed and approved it (never the raw AI
+output silently), and the **recommended classification**, which is a
+transparent, inspectable rule (`_recommended_classification()`) based on
+`incident_type` and the existing risk score, not a model guess - and is
+explicitly labeled "requires supervisor confirmation."
+
 ## Human feedback loop (section 34)
 
 `POST /api/ai/detections/{id}/feedback` lets an authorized user mark an AI

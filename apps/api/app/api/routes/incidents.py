@@ -11,6 +11,7 @@ from app.api.deps import get_current_user, require_permission
 from app.db.session import get_db
 from app.models.enums import IncidentStatus, VerificationStatus
 from app.models.incident import Incident, IncidentStatusHistory
+from app.models.report import Report, ReportSource
 from app.models.user import User
 from app.schemas.incident import (
     IncidentCreate,
@@ -19,8 +20,10 @@ from app.schemas.incident import (
     IncidentUpdate,
     StatusChangeRequest,
 )
+from app.schemas.report import ReportOut
 from app.services.audit import log_action
 from app.services.geospatial.queries import district_for_point
+from app.services.reports.generator import generate_preliminary_report
 from app.services.risk.engine import persist_risk_score
 
 router = APIRouter(prefix="/api/incidents", tags=["incidents"])
@@ -202,3 +205,71 @@ def change_status(
     db.commit()
     db.refresh(incident)
     return incident
+
+
+@router.post("/{incident_id}/preliminary-report", response_model=ReportOut)
+def generate_incident_preliminary_report(
+    incident_id: uuid.UUID,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("report:generate_preliminary")),
+) -> ReportOut:
+    """'The AI can then generate the official preliminary report' - the field
+    officer's capture (location, equipment, evidence, voice statement) is
+    assembled into one structured document. See services/reports/generator.py
+    for exactly what's database-sourced vs. AI-assembled."""
+    incident = db.get(Incident, incident_id)
+    if incident is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Incident not found")
+
+    generated = generate_preliminary_report(db, incident)
+
+    report = Report(
+        report_type="preliminary_field_report",
+        title=generated.title,
+        filters={"incident_id": str(incident_id)},
+        content_markdown=generated.content_markdown,
+        generated_by=user.id,
+        model_name="naimos-report-assembler",
+        model_version="0.1.0-demo",
+    )
+    db.add(report)
+    db.flush()
+    for source_id in generated.source_incident_ids:
+        db.add(ReportSource(report_id=report.id, incident_id=source_id))
+
+    log_action(
+        db, user_id=user.id, action="report.preliminary_generated", entity_type="incident", entity_id=str(incident.id),
+        new_value=report.title, ip_address=request.client.host if request.client else None,
+    )
+    db.commit()
+    db.refresh(report)
+
+    return ReportOut(
+        id=report.id, report_type=report.report_type, title=report.title, content_markdown=report.content_markdown,
+        model_name=report.model_name, model_version=report.model_version,
+        source_incident_ids=[s.incident_id for s in report.sources], created_at=report.created_at,
+    )
+
+
+@router.get("/{incident_id}/preliminary-report", response_model=ReportOut | None)
+def get_incident_preliminary_report(
+    incident_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission("report:generate_preliminary")),
+) -> ReportOut | None:
+    """Returns the most recently generated preliminary report for this
+    incident, if any, without generating a new one."""
+    report = db.execute(
+        select(Report)
+        .join(ReportSource, ReportSource.report_id == Report.id)
+        .where(ReportSource.incident_id == incident_id, Report.report_type == "preliminary_field_report")
+        .order_by(Report.created_at.desc())
+    ).scalars().first()
+    if report is None:
+        return None
+    return ReportOut(
+        id=report.id, report_type=report.report_type, title=report.title, content_markdown=report.content_markdown,
+        model_name=report.model_name, model_version=report.model_version,
+        source_incident_ids=[s.incident_id for s in report.sources], created_at=report.created_at,
+    )
