@@ -29,6 +29,7 @@ from app.models.enums import (
     IncidentType,
     InvestigationStage,
     Priority,
+    RiskCategory,
     RoleName,
     SourceType,
     VerificationStatus,
@@ -369,17 +370,34 @@ def seed_status_history_for_new(db: Session, incidents: list[Incident], users: d
 
 
 def seed_risk_scores(db: Session, incidents: list[Incident]) -> None:
+    """Seeds today's risk score for every incident, plus a synthetic
+    ~8-day-old snapshot so the Risk Leaderboard's week-over-week Change%
+    column has real history to compute from out of the box (section 3 /
+    the 'AI Risk Map' leaderboard). The historical score is deterministic
+    per incident (reference-number-seeded) rather than random noise, so
+    re-seeding always produces the same demo story."""
     for incident in incidents:
         result = calculate_risk(db, incident.latitude, incident.longitude, exclude_incident_id=incident.id)
+        now = datetime.now(timezone.utc)
         risk = RiskScore(
             incident_id=incident.id, location=incident.location, score=result.score, category=result.category,
-            calculated_at=datetime.now(timezone.utc), explanation=result.explanation,
+            calculated_at=now, explanation=result.explanation,
         )
         db.add(risk)
         db.flush()
         for f in result.factors:
             db.add(RiskFactor(risk_score_id=risk.id, label=f.label, points=f.points, detail=f.detail))
         incident.risk_score = result.score
+
+        rng = random.Random(incident.reference_number)
+        change_factor = rng.uniform(-0.05, 0.5)
+        past_score = max(1, min(100, round(result.score / (1 + change_factor))))
+        db.add(RiskScore(
+            incident_id=incident.id, location=incident.location, score=past_score,
+            category=RiskCategory.from_score(past_score), calculated_at=now - timedelta(days=8),
+            explanation=f"RISK SCORE: {past_score} ({RiskCategory.from_score(past_score).value}). "
+                        "Historical snapshot from prior monitoring pass.",
+        ))
     db.flush()
 
 

@@ -22,6 +22,12 @@ subject to human verification. See the full product spec in
   scores/factors, audit logs, AI query log, reports.
 - **Explainable risk engine** - rule-based 0–100 "Operational Risk / Investigation
   Priority Score" with a labeled factor breakdown (never a black box).
+- **AI Risk Map** - a ranked leaderboard across every monitored area (score,
+  week-over-week change, nearest water body, priority), answering "where
+  should we investigate first?" rather than a single-location lookup. Change%
+  is computed from real risk-score history, not faked; a "Recalculate risk
+  scores" action appends a fresh snapshot so the trend keeps building over
+  real use.
 - **Geospatial intelligence map** - MapLibre (token-free tiles), layered
   incidents/hotspots/water bodies/protected areas/forest reserves/AI detections,
   click-to-inspect Location Intelligence panel.

@@ -17,6 +17,18 @@ from app.services.geospatial.queries import nearest_protected_area, nearest_wate
 RECENT_WINDOW_DAYS = 30
 NEARBY_RADIUS_KM = 5.0
 
+PRIORITY_LABELS: dict[RiskCategory, tuple[str, str]] = {
+    RiskCategory.CRITICAL: ("Critical", "\U0001F534"),  # red circle
+    RiskCategory.HIGH: ("High", "\U0001F7E0"),  # orange circle
+    RiskCategory.ELEVATED: ("Elevated", "\U0001F7E0"),  # orange circle
+    RiskCategory.MODERATE: ("Moderate", "\U0001F7E1"),  # yellow circle
+    RiskCategory.LOW: ("Low", "\U0001F7E2"),  # green circle
+}
+
+
+def priority_label(category: RiskCategory) -> tuple[str, str]:
+    return PRIORITY_LABELS[category]
+
 
 @dataclass
 class RiskFactorResult:
@@ -142,3 +154,31 @@ def calculate_risk(db: Session, lat: float, lon: float, exclude_incident_id=None
         )
 
     return RiskResult(score=score, category=category, factors=factors, explanation=explanation)
+
+
+def persist_risk_score(db: Session, incident, calculated_at: datetime | None = None) -> "RiskResult":
+    """Computes and persists a new risk_scores snapshot (+ factors) for an
+    incident's location, updating the incident's denormalized `risk_score`.
+    Never overwrites prior snapshots - each call appends to history, which
+    is what makes week-over-week change on the leaderboard real rather than
+    synthetic. Shared by incident creation and the bulk recalculate endpoint."""
+    from geoalchemy2.shape import from_shape
+    from shapely.geometry import Point
+
+    from app.models.ai import RiskFactor, RiskScore
+
+    result = calculate_risk(db, incident.latitude, incident.longitude, exclude_incident_id=incident.id)
+    risk_score = RiskScore(
+        incident_id=incident.id,
+        location=from_shape(Point(incident.longitude, incident.latitude), srid=4326),
+        score=result.score,
+        category=result.category,
+        calculated_at=calculated_at or datetime.now(timezone.utc),
+        explanation=result.explanation,
+    )
+    db.add(risk_score)
+    db.flush()
+    for f in result.factors:
+        db.add(RiskFactor(risk_score_id=risk_score.id, label=f.label, points=f.points, detail=f.detail))
+    incident.risk_score = result.score
+    return result

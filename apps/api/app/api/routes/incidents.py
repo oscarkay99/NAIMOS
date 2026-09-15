@@ -9,7 +9,6 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import get_current_user, require_permission
 from app.db.session import get_db
-from app.models.ai import RiskFactor, RiskScore
 from app.models.enums import IncidentStatus, VerificationStatus
 from app.models.incident import Incident, IncidentStatusHistory
 from app.models.user import User
@@ -22,7 +21,7 @@ from app.schemas.incident import (
 )
 from app.services.audit import log_action
 from app.services.geospatial.queries import district_for_point
-from app.services.risk.engine import calculate_risk
+from app.services.risk.engine import persist_risk_score
 
 router = APIRouter(prefix="/api/incidents", tags=["incidents"])
 
@@ -30,23 +29,6 @@ router = APIRouter(prefix="/api/incidents", tags=["incidents"])
 def _generate_reference_number() -> str:
     year = datetime.now(timezone.utc).year
     return f"NAIMOS-{year}-{str(uuid.uuid4())[:6].upper()}"
-
-
-def _persist_risk_score(db: Session, incident: Incident) -> None:
-    result = calculate_risk(db, incident.latitude, incident.longitude, exclude_incident_id=incident.id)
-    risk_score = RiskScore(
-        incident_id=incident.id,
-        location=from_shape(Point(incident.longitude, incident.latitude), srid=4326),
-        score=result.score,
-        category=result.category,
-        calculated_at=datetime.now(timezone.utc),
-        explanation=result.explanation,
-    )
-    db.add(risk_score)
-    db.flush()
-    for f in result.factors:
-        db.add(RiskFactor(risk_score_id=risk_score.id, label=f.label, points=f.points, detail=f.detail))
-    incident.risk_score = result.score
 
 
 @router.get("", response_model=list[IncidentOut])
@@ -134,7 +116,7 @@ def create_incident(
         changed_at=datetime.now(timezone.utc),
     ))
 
-    _persist_risk_score(db, incident)
+    persist_risk_score(db, incident)
 
     log_action(
         db, user_id=user.id, action="incident.created", entity_type="incident", entity_id=str(incident.id),

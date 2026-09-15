@@ -266,6 +266,31 @@ export interface SatelliteScanResult {
   disclaimer: string;
 }
 
+export interface RiskLeaderboardEntry {
+  incident_id: string;
+  reference_number: string;
+  title: string;
+  region: string | null;
+  district: string | null;
+  latitude: number;
+  longitude: number;
+  status: string;
+  score: number;
+  category: RiskCategory;
+  calculated_at: string;
+  change_pct: number | null;
+  previous_score: number | null;
+  nearest_water_body_name: string | null;
+  nearest_water_body_distance_km: number | null;
+  priority_label: string;
+  priority_emoji: string;
+}
+
+export interface RiskRecalculateResult {
+  recalculated_count: number;
+  recalculated_at: string;
+}
+
 export interface SatelliteHistoryEntry {
   id: string;
   detection_type: string;
