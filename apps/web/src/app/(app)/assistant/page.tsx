@@ -8,9 +8,10 @@ import type { AssistantResponse } from "@/lib/types";
 const SUGGESTIONS = [
   "Which districts had the most verified incidents?",
   "Show emerging hotspots",
-  "Which high-risk areas have not been field verified?",
-  "What incidents are near water bodies?",
-  "Summarize Western region activity",
+  "Which areas have experienced the fastest increase in suspected mining activity?",
+  "Give me the top 10 locations requiring field verification this week",
+  "Show incidents within 2 km of the Ankobra River during the last 60 days",
+  "Summarise all incidents involving excavators in the Western Region",
   "Show incidents that have been open for more than 5 days",
   "Generate a briefing for today's operations meeting",
 ];

@@ -9,7 +9,7 @@ import re
 from app.schemas.field_report import VoiceExtraction
 
 _TIME_RE = re.compile(r"\b(\d{1,2}[:.]\d{2})\b|\b(\d{1,2})\s*(am|pm|o'?clock)\b", re.I)
-_EQUIPMENT_TERMS = ["excavator", "bulldozer", "changfan", "chanfan", "dredge", "pump", "truck", "generator"]
+EQUIPMENT_TERMS = ["excavator", "bulldozer", "changfan", "chanfan", "dredge", "pump", "truck", "generator"]
 _WATER_TERMS = ["river", "stream", "lake", "lagoon", "creek", "water body"]
 _NUMBER_WORDS = {
     "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8,
@@ -32,7 +32,7 @@ def extract_structured(transcript: str) -> VoiceExtraction:
 
     equipment = [
         _extract_count_before(term, transcript)
-        for term in _EQUIPMENT_TERMS
+        for term in EQUIPMENT_TERMS
         if re.search(rf"\b{term}", transcript, re.I)
     ]
 
