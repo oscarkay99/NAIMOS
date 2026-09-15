@@ -22,6 +22,7 @@ _MANUAL_SPATIAL_INDEXES = {
     "idx_incidents_location", "idx_ai_detections_location", "idx_risk_scores_location",
     "idx_evidence_location", "idx_field_reports_location",
     "idx_satellite_observations_location", "idx_satellite_scans_location",
+    "idx_expansion_predictions_location",
 }
 
 

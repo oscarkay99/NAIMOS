@@ -17,6 +17,7 @@ PostgreSQL + PostGIS. Schema is managed entirely through Alembic migrations in
 | `ai_detections` | AI change-detection signals, always `requires_verification` |
 | `satellite_observations`, `satellite_scans` | Before/after imagery metadata for a change-detection pass, and the audit link from a scan to the `ai_detections` row it produced |
 | `risk_scores`, `risk_factors` | Explainable risk score + its named contributing factors |
+| `expansion_predictions`, `expansion_prediction_factors` | Predictive Galamsey Intelligence: explainable expansion-probability projection + its named contributing factors |
 | `reports`, `report_sources` | Generated PRO/intelligence reports + the incident IDs backing them |
 | `audit_logs` | Append-only log of every sensitive action |
 | `ai_queries` | Audit trail of every NL question sent to the AI assistant |
@@ -29,6 +30,10 @@ PostgreSQL + PostGIS. Schema is managed entirely through Alembic migrations in
   (previous status, new status, who, when, why).
 - `risk_scores.incident_id` → `incidents`; `risk_factors.risk_score_id` →
   `risk_scores` (one score, many labeled factors).
+- `expansion_predictions.incident_id` → `incidents`;
+  `expansion_prediction_factors.prediction_id` → `expansion_predictions`
+  (mirrors risk_scores/risk_factors - a new snapshot is appended, never
+  overwritten, on every recalculation).
 - `evidence.incident_id` → `incidents`; `evidence_versions.evidence_id` →
   `evidence` (append-only version history).
 - `field_reports.incident_id` → `incidents` (nullable - a voice report can be

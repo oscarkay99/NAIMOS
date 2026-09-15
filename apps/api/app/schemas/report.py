@@ -7,7 +7,8 @@ from app.schemas.common import ORMModel
 
 
 class ReportGenerateRequest(BaseModel):
-    report_type: str  # "executive_brief" | "press_briefing" | "weekly_situation" | "talking_points" | "media_qa"
+    report_type: str  # "executive_brief" | "weekly_situation" | "press_briefing" | "social_media_briefing"
+    # | "parliamentary_briefing" | "talking_points" | "media_qa"
     region_id: uuid.UUID | None = None
     district_id: uuid.UUID | None = None
     date_from: date | None = None

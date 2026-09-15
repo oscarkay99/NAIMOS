@@ -62,6 +62,24 @@ def district_for_point(db: Session, lat: float, lon: float, max_distance_km: flo
     return None
 
 
+def nearest_other_incident(db: Session, lat: float, lon: float, exclude_id: uuid.UUID | None = None) -> dict | None:
+    """Nearest incident to a point, excluding a given incident itself -
+    powers the 'previous mining activity N km away' predictive signal."""
+    query = """
+        SELECT id, reference_number,
+               ST_Distance(location::geography, ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)::geography) AS distance_m
+        FROM incidents
+        WHERE 1=1
+    """
+    params: dict = {"lat": lat, "lon": lon}
+    if exclude_id is not None:
+        query += " AND id != :exclude_id"
+        params["exclude_id"] = str(exclude_id)
+    query += " ORDER BY location <-> ST_SetSRID(ST_MakePoint(:lon, :lat), 4326) LIMIT 1"
+    row = db.execute(text(query), params).mappings().first()
+    return dict(row) if row else None
+
+
 def count_nearby_incidents(db: Session, lat: float, lon: float, radius_km: float, exclude_id: uuid.UUID | None = None) -> int:
     query = """
         SELECT COUNT(*) FROM incidents

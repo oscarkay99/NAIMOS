@@ -40,6 +40,7 @@ from app.models.geo import District, ForestReserve, ProtectedArea, Region, Water
 from app.models.incident import Incident, IncidentStatusHistory
 from app.models.investigation import Assignment, Investigation, Officer, Team
 from app.models.user import Permission, Role, User
+from app.services.prediction.engine import persist_expansion_prediction
 from app.services.risk.engine import calculate_risk
 from app.services.storage.local_storage import get_storage_provider
 
@@ -308,7 +309,9 @@ def seed_incidents(db: Session, regions, districts, users) -> list[Incident]:
         ("000115", "Third field report - same hotspot", "Additional observation of continued excavation near the river.",
          5.3190, -2.2285, "Western", "Tarkwa-Nsuaem", IncidentType.LAND_DISTURBANCE,
          IncidentStatus.NEW, VerificationStatus.UNVERIFIED, True, False, 2, Priority.HIGH),
-        ("000116", "Fourth field report - same hotspot", "Repeated observation, activity appears ongoing.",
+        ("000116", "Fourth field report - same hotspot",
+         "Repeated observation, activity appears ongoing. Officer also noted a new access road cut "
+         "through the treeline toward the riverbank since the last visit.",
          5.3225, -2.2240, "Western", "Tarkwa-Nsuaem", IncidentType.SUSPECTED_ILLEGAL_MINING,
          IncidentStatus.NEW, VerificationStatus.UNVERIFIED, True, False, 3, Priority.HIGH),
         ("000117", "Historical report - same area", "Older report retained to establish activity history for this location.",
@@ -401,6 +404,19 @@ def seed_risk_scores(db: Session, incidents: list[Incident]) -> None:
     db.flush()
 
 
+def seed_expansion_predictions(db: Session, incidents: list[Incident]) -> None:
+    """Seeds today's expansion prediction for every incident (Predictive
+    Galamsey Intelligence). Must run after seed_risk_scores (reuses the
+    8-day-old risk history for the trend signal) and after
+    seed_ai_detections (reuses the seeded NEW_ROAD / land-disturbance
+    signals) so the demo shows real, non-trivial predictions out of the
+    box rather than every location scoring 0%."""
+    now = datetime.now(timezone.utc)
+    for incident in incidents:
+        persist_expansion_prediction(db, incident, calculated_at=now)
+    db.flush()
+
+
 def seed_ai_detections(db: Session, incidents: list[Incident], users: dict[str, User]) -> None:
     analyst = users["env.analyst@naimos.gov.gh"]
     target = incidents[0]
@@ -415,6 +431,14 @@ def seed_ai_detections(db: Session, incidents: list[Incident], users: dict[str, 
     db.add(AIDetection(
         location=target.location, detection_type=DetectionType.EXPOSED_SOIL, confidence=0.72,
         estimated_area_hectares=3.1, observation_date=datetime.now(timezone.utc) - timedelta(days=1),
+        incident_id=target.id, requires_verification=True, review_status=AIReviewStatus.PENDING,
+    ))
+
+    # New access route near the same Tarkwa-Nsuaem hotspot - feeds the
+    # Predictive Galamsey Intelligence "new access route detected" signal.
+    db.add(AIDetection(
+        location=target.location, detection_type=DetectionType.NEW_ROAD, confidence=0.81,
+        observation_date=datetime.now(timezone.utc) - timedelta(days=3),
         incident_id=target.id, requires_verification=True, review_status=AIReviewStatus.PENDING,
     ))
 
@@ -557,6 +581,9 @@ def run() -> None:
 
         print("Calculating risk scores...")
         seed_risk_scores(db, incidents)
+
+        print("Calculating expansion predictions...")
+        seed_expansion_predictions(db, incidents)
 
         print("Seeding field reports (voice-to-report demo)...")
         seed_field_reports(db, incidents, users)

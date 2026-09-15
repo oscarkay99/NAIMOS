@@ -70,10 +70,13 @@ question → detect_intent() [regex]
 ```
 
 See `services/ai/nl_query.py` for the full intent list (districts with most
-verified incidents, emerging hotspots, high-risk unverified areas, incidents
-near water bodies, region summaries, incidents open >N days, today's
-briefing). There is no code path that lets an LLM produce SQL that gets
-executed. Every query is logged to `ai_queries` and to `audit_logs`.
+verified incidents, emerging hotspots, fastest-increasing risk, top-N
+locations needing field verification, high-risk unverified areas, incidents
+near a named water body within a radius/time window, incidents near water
+bodies generically, incidents by equipment + region, region summaries,
+incidents open >N days, today's briefing). There is no code path that lets
+an LLM produce SQL that gets executed. Every query is logged to `ai_queries`
+and to `audit_logs`.
 
 ## Preliminary field report generation
 
@@ -109,6 +112,52 @@ Evidence Files sections, with the same "requires verification, not legal
 proof" framing as single-image analysis - and explicitly states that
 original evidence files and their audit trail remain authoritative and are
 never replaced by the summary.
+
+## Predictive Galamsey Intelligence (expansion prediction)
+
+`services/prediction/engine.py::calculate_expansion()` is the risk engine's
+forward-looking counterpart: instead of "how risky is this location right
+now," it estimates "how likely is illegal mining to *expand* from this
+location in the near term." It is built on the exact same principle as the
+risk engine - an explainable, rule-based score, never a black-box model -
+over real, database-backed signals:
+
+- **Rising risk trend**: reuses the same risk-score history the AI Risk Map
+  leaderboard reads for week-over-week Change%.
+- **New access route detected**: a real, structured query for nearby
+  `ai_detections` rows with `detection_type = NEW_ROAD`.
+- **Increased land disturbance**: nearby non-rejected `ai_detections` of any
+  other type (vegetation loss, exposed soil, excavation).
+- **Previous mining activity nearby**: the nearest other incident and its
+  real distance, via `nearest_other_incident()`.
+- **Proximity to water body**: the same PostGIS nearest-water-body query the
+  risk engine uses.
+- **Equipment movement reports**: recent nearby incidents with a non-null
+  `equipment_observed` field.
+
+`probability` is capped at 95 - the system can never claim certainty about a
+future event - and every explanation string ends with *"an AI-generated
+projection based on current signals, not a certainty about future events -
+always requires field verification before any operational or public
+claim."* Predictions are persisted to `expansion_predictions` /
+`expansion_prediction_factors` (mirroring `risk_scores` / `risk_factors`)
+and never overwritten, so history accumulates the same way. See
+`/predictions` in the web app and `GET /api/predictions/leaderboard`.
+
+## AI Communications Intelligence
+
+`services/reports/generator.py` generates seven distinctly-formatted
+communication types from the same underlying, database-only aggregates
+(never re-queried per type, so no two types can silently disagree):
+executive brief and weekly situation summary (detailed, internal, full
+VERIFIED FACTS / AI-GENERATED INTERPRETATION split), press briefing (formal
+prose, deliberately omits coordinates and raw risk scores), social media
+briefing (2-3 sentences, verified counts only), parliamentary briefing
+(formal register, addressed to members), talking points (one-line bullets),
+and media Q&A (real question -> answer pairs, each traceable to the same
+aggregates - including a seizure-count question whose honest answer is that
+NAIMOS does not track that figure, rather than a fabricated number). See
+`/communications` in the web app and `POST /api/reports/generate`.
 
 ## Human feedback loop (section 34)
 

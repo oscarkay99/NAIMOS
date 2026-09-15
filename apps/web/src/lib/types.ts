@@ -291,6 +291,75 @@ export interface RiskRecalculateResult {
   recalculated_at: string;
 }
 
+export interface ExpansionFactor {
+  label: string;
+  points: number;
+  detail: string | null;
+}
+
+export interface ExpansionLeaderboardEntry {
+  incident_id: string;
+  reference_number: string;
+  title: string;
+  region: string | null;
+  district: string | null;
+  latitude: number;
+  longitude: number;
+  status: string;
+  probability: number;
+  category: RiskCategory;
+  expected_development: string;
+  recommendation: string;
+  calculated_at: string;
+  factors: ExpansionFactor[];
+}
+
+export interface ExpansionPredictionOut {
+  id: string;
+  incident_id: string | null;
+  probability: number;
+  category: RiskCategory;
+  expected_development: string;
+  recommendation: string;
+  calculated_at: string;
+  model_version: string;
+  explanation: string | null;
+  factors: ExpansionFactor[];
+}
+
+export interface ExpansionRecalculateResult {
+  recalculated_count: number;
+  recalculated_at: string;
+}
+
+export interface NationalHotspot {
+  incident_id: string;
+  reference_number: string;
+  title: string;
+  region: string | null;
+  district: string | null;
+  latitude: number;
+  longitude: number;
+  risk_score: number;
+  change_pct: number | null;
+  estimated_affected_area_hectares: number | null;
+  distance_to_water_m: number | null;
+  nearest_water_body_name: string | null;
+  last_field_verification_days_ago: number | null;
+  priority_label: string;
+  priority_emoji: string;
+}
+
+export interface NationalSituation {
+  active_investigations: number;
+  high_risk_locations: number;
+  field_operations: number;
+  incidents_this_month: number;
+  water_bodies_affected: number;
+  forest_areas_affected: number;
+  top_hotspots: NationalHotspot[];
+}
+
 export interface SatelliteHistoryEntry {
   id: string;
   detection_type: string;

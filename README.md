@@ -54,8 +54,22 @@ subject to human verification. See the full product spec in
   on-demand from any incident's detail page.
 - **AI assistant** - natural language → allowlisted, parametrized queries only
   (never free-form AI-generated SQL) against a read-only DB role.
-- **PRO Communications Centre** - report/briefing generator built only from
-  database records, separating VERIFIED FACTS from AI-GENERATED INTERPRETATION.
+- **Predictive Galamsey Intelligence** - the risk engine's forward-looking
+  counterpart: an explainable, rule-based "expansion probability" (rising
+  risk trend, new access routes, land disturbance, nearby prior activity,
+  water proximity, equipment reports), capped below 100% and always paired
+  with an expected-development window and a patrol recommendation - never
+  presented as a certainty.
+- **PRO Communications Centre** - seven distinctly-formatted communication
+  types (press briefing, social media briefing, situation report,
+  parliamentary briefing, media Q&A, executive brief, talking points) built
+  only from database records, separating VERIFIED FACTS from AI-GENERATED
+  INTERPRETATION.
+- **PRO National Situation Room** - a role-specific dashboard answering
+  "what is happening across Ghana right now?": national summary counts plus
+  a clickable Top 10 Emerging Hotspots map/list with a per-hotspot detail
+  card (risk, estimated affected area, distance to water, activity change,
+  last field verification).
 - **Audit logging** - every sensitive action (login, status change, evidence
   upload/download, AI query, report generation) is recorded.
 - **Analytics** - incidents over time/region/status, verification rate, team

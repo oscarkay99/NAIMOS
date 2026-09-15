@@ -10,6 +10,7 @@ from app.api.routes import (
     field_reports,
     geo,
     incidents,
+    predictions,
     reports,
     risk,
     satellite,
@@ -35,6 +36,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(incidents.router)
 app.include_router(risk.router)
+app.include_router(predictions.router)
 app.include_router(geo.router)
 app.include_router(evidence.router)
 app.include_router(field_reports.router)

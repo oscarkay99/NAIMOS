@@ -14,8 +14,10 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Dashboard" },
+  { href: "/pro", label: "National Situation Room", permission: "dashboard:national_situation" },
   { href: "/map", label: "Map" },
   { href: "/risk-map", label: "AI Risk Map", permission: "risk:view" },
+  { href: "/predictions", label: "Predictive Intelligence", permission: "prediction:view" },
   { href: "/satellite", label: "Satellite Monitoring", permission: "satellite:scan" },
   { href: "/incidents", label: "Incidents", permission: "incident:read" },
   { href: "/field", label: "Field Reporting", permission: "field_report:create" },

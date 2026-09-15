@@ -60,14 +60,30 @@ field reports and AI detections are entirely synthetic.
 10. Log in as `analyst@naimos.gov.gh` or `supervisor@naimos.gov.gh` → open the
     incident → **Change Status** to `VERIFIED` with a reason (writes to the
     timeline and audit log).
-11. Log in as `pro@naimos.gov.gh` → **Communications** → generate an
-    **Executive Brief** - note the VERIFIED FACTS / AI-GENERATED
+11. Log in as `pro@naimos.gov.gh` → **Communications** → generate a **Press
+    Briefing**, then a **Media Q&A** - compare the prose vs. the real
+    question→answer pairs (note the seizure-count question, answered
+    honestly with "not tracked" rather than a fabricated figure), then
+    generate an **Executive Brief** to see the VERIFIED FACTS / AI-GENERATED
     INTERPRETATION / SOURCE RECORDS separation.
-12. **Intelligence Assistant** → ask "Show emerging hotspots" or "Which
-    high-risk areas have not been field verified?" and see it answer strictly
-    from the database.
-13. **Audit Logs** (as `auditor@naimos.gov.gh`) → see every action from the
-    walkthrough recorded, including the satellite scan and risk recalculation.
+12. Still as `pro@naimos.gov.gh` → **National Situation Room** - a
+    role-specific dashboard, not the same view every other role sees.
+    National summary counts, then click through the **Top 10 Emerging
+    Hotspots** list/map to see the per-hotspot detail card (risk, estimated
+    affected area, distance to water, activity change, last field
+    verification).
+13. As `analyst@naimos.gov.gh` → **Predictive Intelligence** - ranked by AI
+    expansion probability rather than current risk. The Tarkwa-Nsuaem
+    cluster tops the list at 95% (CRITICAL) with five named factors
+    including a real "New access route detected" signal; click
+    **"Recalculate predictions"** to see it genuinely recompute.
+14. **Intelligence Assistant** → ask "Which areas have experienced the
+    fastest increase in suspected mining activity?" or "Summarise all
+    incidents involving excavators in the Western Region" and see it answer
+    strictly from the database.
+15. **Audit Logs** (as `auditor@naimos.gov.gh`) → see every action from the
+    walkthrough recorded, including the satellite scan, risk recalculation,
+    and prediction recalculation.
 
 ## Seeded scenarios (spec section 42)
 

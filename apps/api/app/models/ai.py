@@ -71,6 +71,46 @@ class RiskFactor(Base):
     risk_score: Mapped["RiskScore"] = relationship(back_populates="factors")
 
 
+class ExpansionPrediction(Base, TimestampMixin):
+    """Predictive Galamsey Intelligence (spec: 'predict where mining is
+    likely to expand next'). Like RiskScore, this is an explainable,
+    rule-based projection over real signals already in the database - never
+    a black-box forecast and never a certainty. `probability` is an AI
+    estimate of near-term expansion likelihood, capped below 100 so the
+    system can never claim certainty about the future."""
+
+    __tablename__ = "expansion_predictions"
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    incident_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("incidents.id"), nullable=True, index=True)
+    location: Mapped[str] = mapped_column(Geometry(geometry_type="POINT", srid=4326, spatial_index=False), nullable=False)
+    probability: Mapped[int] = mapped_column(Integer, nullable=False)  # 0-95, never 100
+    category: Mapped[RiskCategory] = mapped_column(Enum(RiskCategory, name="risk_category"))
+    expected_development: Mapped[str] = mapped_column(String(64), nullable=False)  # e.g. "2-4 weeks"
+    recommendation: Mapped[str] = mapped_column(Text, nullable=False)
+    calculated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    model_version: Mapped[str] = mapped_column(String(32), default="expansion-predictor-0.1.0")
+    explanation: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    factors: Mapped[list["ExpansionPredictionFactor"]] = relationship(
+        back_populates="prediction", cascade="all, delete-orphan"
+    )
+
+
+class ExpansionPredictionFactor(Base):
+    __tablename__ = "expansion_prediction_factors"
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    prediction_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("expansion_predictions.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    label: Mapped[str] = mapped_column(String(128), nullable=False)  # e.g. "New access route detected"
+    points: Mapped[int] = mapped_column(Integer, nullable=False)
+    detail: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    prediction: Mapped["ExpansionPrediction"] = relationship(back_populates="factors")
+
+
 class AIQuery(Base):
     """Audit trail for every natural-language query sent to the AI assistant
     (section 20/35) - required for auditability of AI-mediated data access."""

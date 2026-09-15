@@ -7,11 +7,13 @@ import { api, ApiError } from "@/lib/api";
 import type { ReportOut } from "@/lib/types";
 
 const REPORT_TYPES: { value: string; label: string }[] = [
-  { value: "executive_brief", label: "Executive Brief" },
   { value: "press_briefing", label: "Press Briefing" },
-  { value: "weekly_situation", label: "Weekly Situation Summary" },
+  { value: "social_media_briefing", label: "Social Media Briefing" },
+  { value: "weekly_situation", label: "Situation Report" },
+  { value: "parliamentary_briefing", label: "Parliamentary Briefing" },
+  { value: "media_qa", label: "Media Q&A" },
+  { value: "executive_brief", label: "Executive Brief" },
   { value: "talking_points", label: "Talking Points" },
-  { value: "media_qa", label: "Media Q&A Preparation" },
 ];
 
 export default function CommunicationsPage() {
