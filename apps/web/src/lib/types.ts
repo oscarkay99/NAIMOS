@@ -188,6 +188,13 @@ export interface AnalyticsSummary {
   team_workload: { team: string; active: number; high_priority: number; overdue: number; completed: number }[];
 }
 
+export interface Page<T> {
+  items: T[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 export interface AuditLogEntry {
   id: string;
   user_id: string | null;

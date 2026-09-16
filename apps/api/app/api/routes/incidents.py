@@ -1,10 +1,10 @@
 import uuid
 from datetime import date, datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from geoalchemy2.shape import from_shape
 from shapely.geometry import Point
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import get_current_user, require_permission
@@ -35,8 +35,40 @@ def _generate_reference_number() -> str:
     return f"NAIMOS-{year}-{str(uuid.uuid4())[:6].upper()}"
 
 
+def _incident_filters(
+    region_id: uuid.UUID | None,
+    district_id: uuid.UUID | None,
+    status_filter: IncidentStatus | None,
+    verification_status: VerificationStatus | None,
+    min_risk: int | None,
+    date_from: date | None,
+    date_to: date | None,
+    search: str | None,
+) -> list:
+    filters = []
+    if region_id:
+        filters.append(Incident.region_id == region_id)
+    if district_id:
+        filters.append(Incident.district_id == district_id)
+    if status_filter:
+        filters.append(Incident.status == status_filter)
+    if verification_status:
+        filters.append(Incident.verification_status == verification_status)
+    if min_risk is not None:
+        filters.append(Incident.risk_score >= min_risk)
+    if date_from:
+        filters.append(Incident.created_at >= date_from)
+    if date_to:
+        filters.append(Incident.created_at <= date_to)
+    if search:
+        like = f"%{search}%"
+        filters.append((Incident.title.ilike(like)) | (Incident.reference_number.ilike(like)))
+    return filters
+
+
 @router.get("", response_model=list[IncidentOut])
 def list_incidents(
+    response: Response,
     db: Session = Depends(get_db),
     user: User = Depends(require_permission("incident:read")),
     region_id: uuid.UUID | None = None,
@@ -50,26 +82,18 @@ def list_incidents(
     limit: int = Query(50, le=200),
     offset: int = 0,
 ) -> list[Incident]:
-    stmt = select(Incident)
-    if region_id:
-        stmt = stmt.where(Incident.region_id == region_id)
-    if district_id:
-        stmt = stmt.where(Incident.district_id == district_id)
-    if status_filter:
-        stmt = stmt.where(Incident.status == status_filter)
-    if verification_status:
-        stmt = stmt.where(Incident.verification_status == verification_status)
-    if min_risk is not None:
-        stmt = stmt.where(Incident.risk_score >= min_risk)
-    if date_from:
-        stmt = stmt.where(Incident.created_at >= date_from)
-    if date_to:
-        stmt = stmt.where(Incident.created_at <= date_to)
-    if search:
-        like = f"%{search}%"
-        stmt = stmt.where((Incident.title.ilike(like)) | (Incident.reference_number.ilike(like)))
+    """Response shape stays a plain array (several pages fetch this without
+    caring about pagination, e.g. the dashboard's metric cards) - the total
+    matching count rides along on the X-Total-Count header instead, so a
+    caller that wants real page controls (see /incidents) can read it
+    without a second request, and everyone else can ignore it."""
+    filters = _incident_filters(
+        region_id, district_id, status_filter, verification_status, min_risk, date_from, date_to, search
+    )
+    total = db.execute(select(func.count()).select_from(Incident).where(*filters)).scalar_one()
+    response.headers["X-Total-Count"] = str(total)
 
-    stmt = stmt.order_by(Incident.created_at.desc()).limit(limit).offset(offset)
+    stmt = select(Incident).where(*filters).order_by(Incident.created_at.desc()).limit(limit).offset(offset)
     return list(db.execute(stmt).scalars().all())
 
 

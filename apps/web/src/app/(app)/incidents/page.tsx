@@ -4,9 +4,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Topbar } from "@/components/Topbar";
 import { StatusBadge } from "@/components/StatusBadge";
+import { Pager } from "@/components/Pager";
 import { LoadingState, ErrorState, EmptyState } from "@/components/States";
 import { api, ApiError } from "@/lib/api";
 import type { Incident, IncidentStatus } from "@/lib/types";
+
+const PAGE_SIZE = 25;
 
 const STATUS_OPTIONS: IncidentStatus[] = [
   "NEW",
@@ -20,23 +23,34 @@ const STATUS_OPTIONS: IncidentStatus[] = [
 
 export default function IncidentsPage() {
   const [incidents, setIncidents] = useState<Incident[] | null>(null);
+  const [total, setTotal] = useState(0);
+  const [offset, setOffset] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string>("");
   const [minRisk, setMinRisk] = useState<string>("");
   const [search, setSearch] = useState("");
 
+  // Any filter change starts back at page one - the previous offset almost
+  // certainly no longer points at a meaningful page of the new result set.
   useEffect(() => {
-    const params = new URLSearchParams({ limit: "200" });
+    setOffset(0);
+  }, [status, minRisk, search]);
+
+  useEffect(() => {
+    const params = new URLSearchParams({ limit: String(PAGE_SIZE), offset: String(offset) });
     if (status) params.set("status", status);
     if (minRisk) params.set("min_risk", minRisk);
     if (search) params.set("search", search);
 
     setIncidents(null);
     api
-      .get<Incident[]>(`/api/incidents?${params.toString()}`)
-      .then(setIncidents)
+      .getWithTotal<Incident[]>(`/api/incidents?${params.toString()}`)
+      .then(({ items, total }) => {
+        setIncidents(items);
+        setTotal(total);
+      })
       .catch((err) => setError(err instanceof ApiError ? err.message : "Failed to load incidents"));
-  }, [status, minRisk, search]);
+  }, [status, minRisk, search, offset]);
 
   return (
     <>
@@ -109,6 +123,7 @@ export default function IncidentsPage() {
                 ))}
               </tbody>
             </table>
+            <Pager total={total} limit={PAGE_SIZE} offset={offset} onOffsetChange={setOffset} itemLabel="incident" />
           </div>
         )}
       </div>

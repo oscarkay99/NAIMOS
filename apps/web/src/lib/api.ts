@@ -92,8 +92,40 @@ async function request<T>(path: string, options: RequestOptions = {}, retry = tr
   return undefined as T;
 }
 
+async function requestWithTotal<T>(path: string): Promise<{ items: T; total: number }> {
+  const token = getAccessToken();
+  const headers: Record<string, string> = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  const resp = await fetch(`${API_URL}${path}`, { headers });
+  if (resp.status === 401) {
+    const refreshed = await tryRefresh();
+    if (refreshed) return requestWithTotal<T>(path);
+    clearTokens();
+    if (typeof window !== "undefined") window.location.href = "/login";
+    throw new ApiError(401, "Not authenticated");
+  }
+  if (!resp.ok) {
+    let detail = resp.statusText;
+    try {
+      detail = (await resp.json()).detail || detail;
+    } catch {
+      // ignore
+    }
+    throw new ApiError(resp.status, detail);
+  }
+
+  const items = (await resp.json()) as T;
+  const totalHeader = resp.headers.get("x-total-count");
+  return { items, total: totalHeader ? parseInt(totalHeader, 10) : (Array.isArray(items) ? items.length : 0) };
+}
+
 export const api = {
   get: <T>(path: string) => request<T>(path),
+  // For list endpoints that report their real total via the X-Total-Count
+  // header (see e.g. GET /api/incidents) rather than a {items,total} body -
+  // lets a page build real page controls without a second round trip.
+  getWithTotal: <T>(path: string) => requestWithTotal<T>(path),
   post: <T>(path: string, body?: unknown) => request<T>(path, { method: "POST", body }),
   patch: <T>(path: string, body?: unknown) => request<T>(path, { method: "PATCH", body }),
   postForm: <T>(path: string, form: FormData) => request<T>(path, { method: "POST", body: form, isForm: true }),

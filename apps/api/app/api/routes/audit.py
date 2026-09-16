@@ -1,16 +1,18 @@
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_permission
 from app.db.session import get_db
 from app.models.audit import AuditLog
 from app.models.user import User
+from app.schemas.audit import AuditLogOut
+from app.schemas.common import Page
 
 router = APIRouter(prefix="/api/audit-logs", tags=["audit"])
 
 
-@router.get("")
+@router.get("", response_model=Page[AuditLogOut])
 def list_audit_logs(
     db: Session = Depends(get_db),
     user: User = Depends(require_permission("audit:view")),
@@ -18,18 +20,26 @@ def list_audit_logs(
     entity_type: str | None = None,
     limit: int = Query(100, le=500),
     offset: int = 0,
-) -> list[dict]:
-    stmt = select(AuditLog).order_by(AuditLog.created_at.desc()).limit(limit).offset(offset)
+) -> Page[AuditLogOut]:
+    """Paginated: the audit log grows by one row on every sensitive action
+    across the whole platform, so unlike most other lists in this app it has
+    no natural size cap - a real `total` lets the UI show how much history
+    exists beyond whatever fits in one page, instead of silently truncating."""
+    filters = []
     if action:
-        stmt = stmt.where(AuditLog.action == action)
+        filters.append(AuditLog.action == action)
     if entity_type:
-        stmt = stmt.where(AuditLog.entity_type == entity_type)
+        filters.append(AuditLog.entity_type == entity_type)
 
-    return [
-        {
-            "id": str(row.id), "user_id": str(row.user_id) if row.user_id else None, "action": row.action,
-            "entity_type": row.entity_type, "entity_id": row.entity_id, "previous_value": row.previous_value,
-            "new_value": row.new_value, "reason": row.reason, "created_at": row.created_at.isoformat(),
-        }
-        for row in db.execute(stmt).scalars().all()
-    ]
+    total = db.execute(select(func.count()).select_from(AuditLog).where(*filters)).scalar_one()
+
+    stmt = (
+        select(AuditLog)
+        .where(*filters)
+        .order_by(AuditLog.created_at.desc())
+        .limit(limit)
+        .offset(offset)
+    )
+    rows = db.execute(stmt).scalars().all()
+
+    return Page(items=[AuditLogOut.model_validate(row) for row in rows], total=total, limit=limit, offset=offset)

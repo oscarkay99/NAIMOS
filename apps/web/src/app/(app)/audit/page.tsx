@@ -2,20 +2,27 @@
 
 import { useEffect, useState } from "react";
 import { Topbar } from "@/components/Topbar";
+import { Pager } from "@/components/Pager";
 import { LoadingState, ErrorState, EmptyState } from "@/components/States";
 import { api, ApiError } from "@/lib/api";
-import type { AuditLogEntry } from "@/lib/types";
+import type { AuditLogEntry, Page } from "@/lib/types";
+
+const PAGE_SIZE = 50;
 
 export default function AuditPage() {
-  const [logs, setLogs] = useState<AuditLogEntry[] | null>(null);
+  const [page, setPage] = useState<Page<AuditLogEntry> | null>(null);
+  const [offset, setOffset] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    setPage(null);
     api
-      .get<AuditLogEntry[]>("/api/audit-logs?limit=200")
-      .then(setLogs)
+      .get<Page<AuditLogEntry>>(`/api/audit-logs?limit=${PAGE_SIZE}&offset=${offset}`)
+      .then(setPage)
       .catch((err) => setError(err instanceof ApiError ? err.message : "Failed to load audit logs"));
-  }, []);
+  }, [offset]);
+
+  const logs = page?.items ?? null;
 
   return (
     <>
@@ -54,6 +61,11 @@ export default function AuditPage() {
                 ))}
               </tbody>
             </table>
+            {page && (
+              <div className="px-2 border-t border-border">
+                <Pager total={page.total} limit={page.limit} offset={page.offset} onOffsetChange={setOffset} itemLabel="event" />
+              </div>
+            )}
           </div>
         )}
       </div>
