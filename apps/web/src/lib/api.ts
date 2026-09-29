@@ -1,3 +1,5 @@
+import { DEMO_MODE, demoRequest } from "./demo";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 const ACCESS_TOKEN_KEY = "naimos_access_token";
@@ -53,6 +55,18 @@ interface RequestOptions {
 }
 
 async function request<T>(path: string, options: RequestOptions = {}, retry = true): Promise<T> {
+  if (DEMO_MODE) {
+    try {
+      return (await demoRequest(options.method || "GET", path, options.body)).data as T;
+    } catch (e) {
+      const err = e as { status?: number; message: string };
+      if (err.status === 401 && retry && !options.skipAuth) {
+        clearTokens();
+        if (typeof window !== "undefined") window.location.href = (process.env.NEXT_PUBLIC_BASE_PATH || "") + "/login";
+      }
+      throw new ApiError(err.status ?? 500, err.message);
+    }
+  }
   const headers: Record<string, string> = {};
   if (!options.isForm) headers["Content-Type"] = "application/json";
 
@@ -93,6 +107,15 @@ async function request<T>(path: string, options: RequestOptions = {}, retry = tr
 }
 
 async function requestWithTotal<T>(path: string): Promise<{ items: T; total: number }> {
+  if (DEMO_MODE) {
+    try {
+      const { data, total } = await demoRequest("GET", path);
+      return { items: data as T, total: total ?? (Array.isArray(data) ? data.length : 0) };
+    } catch (e) {
+      const err = e as { status?: number; message: string };
+      throw new ApiError(err.status ?? 500, err.message);
+    }
+  }
   const token = getAccessToken();
   const headers: Record<string, string> = {};
   if (token) headers["Authorization"] = `Bearer ${token}`;
